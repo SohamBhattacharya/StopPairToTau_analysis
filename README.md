@@ -7,8 +7,8 @@
     * `tar -xvf resources.tar.gz`
     * `tar -xvf sourceFiles.tar.gz`
     * `chmod +x compile.sh`
-    * Change CUSTOM_HEADER_PATH in `compile.sh`.
-    * Change DIR and X509_USER_PROXY in `condor_script.sh`.
+    * Change `CUSTOM_HEADER_PATH` in `compile.sh`.
+    * Change `DIR` and `X509_USER_PROXY` in `condor_script.sh`.
 
 * To compile any file for local test, use: `./compile.sh ch code.cc`. This will creade an executable called `code`.
 * The different analysis jobs can be submitted using `run_condor_mod.py`.
