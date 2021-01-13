@@ -2,7 +2,7 @@
     * `cmsrel CMSSW_10_5_0`
     * `cd CMSSW_10_5_0/src`
     * `cmsenv`
-    * `git clone https://github.com/SohamBhattacharya/StopPair_analysis.git .`
+    * `git clone https://github.com/SohamBhattacharya/StopPairToTau_analysis.git .`
     * `cd stopPair`
     * `tar -xvf resources.tar.gz`
     * `tar -xvf sourceFiles.tar.gz`
@@ -22,3 +22,7 @@
     * tau fake rate
     * tau id-iso efficiency (prompt rate)
 
+
+** Note: **
+* It is convenient to do the editing locally and simply transfer changes using rsync (look at `misc.txt` for the command)
+* If you do not want to enter the password everytime, do `ssh-copy-id user@domain` once.
