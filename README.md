@@ -23,6 +23,6 @@
     * tau id-iso efficiency (prompt rate)
 
 
-** Note: **
+**Note:**
 * It is convenient to do the editing locally and simply transfer changes using rsync (look at `misc.txt` for the command)
 * If you do not want to enter the password everytime, do `ssh-copy-id user@domain` once.
