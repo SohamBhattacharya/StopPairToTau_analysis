@@ -1,0 +1,25 @@
+# ifndef PythonWrapper_H
+# define PythonWrapper_H
+
+
+# include <iostream>
+# include <Python.h>
+# include <utility>
+# include <vector>
+
+
+namespace PythonWrapper
+{
+    public :
+    
+    
+    // Taken from https://docs.python.org/2/extending/embedding.html#pure-embedding
+    double callPythonFunction(
+        std::string fileName,
+        std::string funcName,
+        std::vector <double> v_arg
+    );
+}
+
+
+# endif

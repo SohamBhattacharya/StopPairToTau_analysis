@@ -1,0 +1,17 @@
+hadd DYJetsToLL_mc/output_tauIdIsoEfficiency/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_tauIdIsoEfficiency/custom_all_tauIdIsoEfficiency.root `find DYJetsToLL_mc/output_tauIdIsoEfficiency/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_tauIdIsoEfficiency/ | grep .root$ | grep -v all`
+hadd ttbar_mc/output_tauIdIsoEfficiency/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauIdIsoEfficiency/custom_all_tauIdIsoEfficiency.root `find ttbar_mc/output_tauIdIsoEfficiency/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauIdIsoEfficiency/ | grep .root$ | grep -v all`
+
+hadd ttbar_mc/output_tauTemplateMethodEstimation/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTau_tauTemplateMethodEstimation/custom_all_tauTemplateMethodEstimation.root `find ttbar_mc/output_tauTemplateMethodEstimation/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTau_tauTemplateMethodEstimation/ | grep .root$ | grep -v all`
+hadd ttbar_mc/output_tauTemplateMethodEstimation/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTemplateMethodEstimation_singleMuon/custom_all_tauTemplateMethodEstimation.root `find ttbar_mc/output_tauTemplateMethodEstimation/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTemplateMethodEstimation_singleMuon/ | grep .root$ | grep -v all`
+
+hadd muMu_data/output_tauTemplateMethodEstimation/SingleMuon_Run2016H-18Apr2017-v1_MINIAOD_muMu_tauTemplateMethodEstimation/custom_all_tauTemplateMethodEstimation.root  `find muMu_data/output_tauTemplateMethodEstimation/SingleMuon_Run2016H-18Apr2017-v1_MINIAOD_muMu_tauTemplateMethodEstimation/ | grep .root$ | grep -v all`
+
+hadd ttbar_mc/output_miscellaneous/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_miscellaneous/custom_all_miscellaneous.root `find ttbar_mc/output_miscellaneous/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_miscellaneous/ | grep .root$ | grep -v all`
+
+watch "grep -i input logs/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTau_analysis.log | tail -n 1; grep -i processed logs/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTau_analysis.log | tail -n 5"
+
+hadd ttbar_mc/output_analyzed/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_singleTau_analysis/custom_all_analyzed.root `find ttbar_mc/output_analyzed/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_singleTau_analysis/ | grep root | grep -v all`
+
+hadd tauTau_data/output_tauTau_fakeRate/Tau_Run2016H-18Apr2017-v1_MINIAOD_tauTau_fakeRate/custom_all_fakeRate_tauTau.root `find tauTau_data/output_tauTau_fakeRate/Tau_Run2016H-18Apr2017-v1_MINIAOD_tauTau_fakeRate/*.root | grep -v all`
+
+hadd tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-18Apr2017-v1_MINIAOD_tauTau_fakeEstimation/custom_all_fakeEstimation_tauTau.root `find tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-18Apr2017-v1_MINIAOD_tauTau_fakeEstimation/*.root | grep -v all`

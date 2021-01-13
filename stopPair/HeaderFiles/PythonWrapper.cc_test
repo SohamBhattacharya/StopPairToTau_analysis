@@ -1,0 +1,113 @@
+# include "PythonWrapper.h"
+
+
+namespace PythonWrapper
+{
+    PythonWrapper(
+        std::string fileName,
+        std::string funcName
+    )
+    {
+        Py_Initialize();
+        
+        PyRun_SimpleString("import sys");
+        PyRun_SimpleString("sys.path.append(\".\")");
+        
+        pName = PyString_FromString(fileName.c_str());
+        /* Error checking of pName left out */
+    
+        pModule = PyImport_Import(pName);
+        Py_DECREF(pName);
+        
+        if(pModule == NULL)
+        {
+            PyErr_Print();
+            fprintf(stderr, "Error in PythonWrapper::PythonWrapper(...): Failed to load \"%s\". \n", fileName.c_str());
+            exit(EXIT_FAILURE);
+        }
+    }
+    
+    
+    double callPythonFunction(
+        std::string fileName,
+        std::string funcName,
+        std::vector <double> v_arg
+    )//(int argc, char *argv[])
+    {
+        PyObject *pName, *pModule, *pFunc;
+        PyObject *pArgs, *pValue;
+        int i;
+        
+        double result = (double) NULL;
+        
+        //if (argc < 3) {
+        //    fprintf(stderr,"Usage: call pythonfile funcname [args]\n");
+        //    exit(EXIT_FAILURE);
+        //}
+    
+        //Py_Initialize();
+        //
+        //PyRun_SimpleString("import sys");
+        //PyRun_SimpleString("sys.path.append(\".\")");
+        
+        //pName = PyString_FromString(fileName.c_str());
+        /* Error checking of pName left out */
+    
+        pModule = PyImport_Import(pName);
+        Py_DECREF(pName);
+    
+        if (pModule != NULL) {
+            pFunc = PyObject_GetAttrString(pModule, funcName.c_str());
+            /* pFunc is a new reference */
+    
+            if (pFunc && PyCallable_Check(pFunc)) {
+                pArgs = PyTuple_New(v_arg.size());
+                for (i = 0; i < v_arg.size(); ++i) {
+                    pValue = PyFloat_FromDouble(v_arg.at(i));
+                    if (!pValue) {
+                        Py_DECREF(pArgs);
+                        Py_DECREF(pModule);
+                        fprintf(stderr, "Error in Common::callPythonFunction(...): Cannot convert argument. \n");
+                        exit(EXIT_FAILURE);
+                    }
+                    /* pValue reference stolen here: */
+                    PyTuple_SetItem(pArgs, i, pValue);
+                }
+                pValue = PyObject_CallObject(pFunc, pArgs);
+                Py_DECREF(pArgs);
+                if (pValue != NULL) {
+                    //printf("Result of call: %ld\n", PyFloat_AsDouble(pValue));
+                    
+                    result = PyFloat_AsDouble(pValue);
+                    
+                    Py_DECREF(pValue);
+                }
+                else {
+                    Py_DECREF(pFunc);
+                    Py_DECREF(pModule);
+                    PyErr_Print();
+                    fprintf(stderr,"Error in Common::callPythonFunction(...): Call failed. \n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            else {
+                if (PyErr_Occurred())
+                    PyErr_Print();
+                fprintf(stderr, "Error in Common::callPythonFunction(...): Cannot find function \"%s\". \n", funcName.c_str());
+            }
+            Py_XDECREF(pFunc);
+            Py_DECREF(pModule);
+        }
+        else {
+            PyErr_Print();
+            fprintf(stderr, "Error in Common::callPythonFunction(...): Failed to load \"%s\". \n", fileName.c_str());
+            exit(EXIT_FAILURE);
+        }
+        
+        Py_Finalize();
+        
+        return result;
+        
+        //return 0;
+    }
+}

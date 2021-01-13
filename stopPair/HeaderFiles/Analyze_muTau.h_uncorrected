@@ -1,0 +1,703 @@
+# ifndef Analyze_muTau_H
+# define Analyze_muTau_H
+
+
+# include <iostream>
+# include <fstream>
+# include <map>
+# include <string>
+# include <utility>
+# include <vector>
+
+# include "lester_mt2_bisect_mod.h"
+
+# include "BTagCalibrationStandalone.h"
+# include "CustomInfo_data.h"
+# include "CustomInfo_mc.h"
+# include "Output_GEN.h"
+# include "Output_RECO.h"
+
+
+namespace Analyze_muTau
+{
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY
+    );
+    
+    
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY, \
+        std::pair <int, int> massPoint_stop1_neutralino1
+    );
+    
+    
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY, \
+        std::vector <double> v_eventWeight_nJetBin
+    );
+    
+    
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY, \
+        std::pair <int, int> massPoint_stop1_neutralino1, \
+        std::vector <double> v_eventWeight_nJetBin
+    );
+    
+    
+    template <typename T1> void analyze_reco(T1 *input, \
+        Output_RECO::Output *output_reco, \
+        const char *mu_isoOption, \
+        const char *tau_isoOption, \
+        const char *muTau_signOption, \
+        std::map <std::string, bool> m_eventSelection, \
+        bool isMC, \
+        bool isSUSY, \
+        std::pair <int, int> massPoint_stop1_neutralino1, \
+        std::vector <double> v_eventWeight_nJetBin)
+    {
+        int nEvent = input->T_reco->GetEntries();
+        
+        output_reco->addTauHist(2);
+        output_reco->addbHist(2);
+        output_reco->addJetHist(2);
+        output_reco->addNonBjetHist(2);
+        
+        for(int iEvent = 0; iEvent < nEvent; iEvent++)
+        {
+            if((iEvent+2) % 1000 == 0)
+            {
+                printf("Processed event no. %d / %d \n", iEvent+2, nEvent);
+                fflush(stdout);
+            }
+            
+            if(isMC)
+            {
+                input->T_gen->GetEntry(iEvent);
+            }
+            
+            input->T_reco->GetEntry(iEvent);
+            
+            // Select mass point
+            if(isSUSY)
+            {
+                //printf("stop1_m_genParam %f, neutralino1_m_genParam %f \n", input->stop1_m_genParam, input->neutralino1_m_genParam);
+                
+                if((massPoint_stop1_neutralino1.first >= 0 && input->stop1_m_genParam != massPoint_stop1_neutralino1.first) || \
+                    (massPoint_stop1_neutralino1.second >= 0 && input->neutralino1_m_genParam != massPoint_stop1_neutralino1.second))
+                {
+                    continue;
+                }
+            }
+            
+            //output_reco->getCutFlow("cutFlow1")->at(0)++;
+            
+            for(int iSR = 0; iSR < 6; iSR++)
+            {
+                output_reco->getCutFlow(("SR"+std::to_string(iSR+1)).c_str())->at(0)++;
+            }
+            
+            
+            std::vector <double> v_mu_pTetacut(input->mu_n_reco, 0);
+            std::vector <double> v_mu_IPcut(input->mu_n_reco, 0);
+            std::vector <double> *v_mu_iso_reco;
+            
+            for(int iMu = 0; iMu < input->mu_n_reco; iMu++)
+            {
+                CLHEP::HepLorentzVector mu_4mom_reco;
+                
+                mu_4mom_reco.setT(fabs(input->v_mu_E_reco->at(iMu)));
+                mu_4mom_reco.setX(input->v_mu_px_reco->at(iMu));
+                mu_4mom_reco.setY(input->v_mu_py_reco->at(iMu));
+                mu_4mom_reco.setZ(input->v_mu_pz_reco->at(iMu));
+                
+                if(mu_4mom_reco.perp() > Common::mu_pTcut_muTau_reco && fabs(mu_4mom_reco.eta()) < Common::mu_etaCut_muTau_reco)
+                {
+                    v_mu_pTetacut.at(iMu) = 1;
+                }
+                
+                if(fabs(input->v_mu_dxy_reco->at(iMu)) < Common::mu_dxyCut_reco && fabs(input->v_mu_dz_reco->at(iMu)) < Common::mu_dzCut_reco)
+                {
+                    v_mu_IPcut.at(iMu) = 1;
+                }
+                
+                if(!strcmp(mu_isoOption, "loose"))
+                {
+                    v_mu_iso_reco = input->v_mu_byLoosePFbasedCombinedRelativeDeltaBetaCorrdR04_reco;
+                }
+                
+                else if(!strcmp(mu_isoOption, "medium"))
+                {
+                    v_mu_iso_reco = input->v_mu_byMediumPFbasedCombinedRelativeDeltaBetaCorrdR04_reco;
+                }
+                
+                else if(!strcmp(mu_isoOption, "tight"))
+                {
+                    v_mu_iso_reco = input->v_mu_byTightPFbasedCombinedRelativeDeltaBetaCorrdR04_reco;
+                }
+                
+                else
+                {
+                    printf("Wrong tau isolation option");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            
+            
+            std::vector <double> v_tau_pTetaCut(input->tau_n_reco, 0);
+            
+            for(int iTau = 0; iTau < input->tau_n_reco; iTau++)
+            {
+                CLHEP::HepLorentzVector tau_4mom_reco;
+                
+                tau_4mom_reco.setT(fabs(input->v_tau_E_reco->at(iTau)));
+                tau_4mom_reco.setX(input->v_tau_px_reco->at(iTau));
+                tau_4mom_reco.setY(input->v_tau_py_reco->at(iTau));
+                tau_4mom_reco.setZ(input->v_tau_pz_reco->at(iTau));
+                
+                if(tau_4mom_reco.perp() < Common::tau_pTcut_muTau_reco || fabs(tau_4mom_reco.eta()) > Common::tau_etaCut_muTau_reco)
+                {
+                    continue;
+                }
+                
+                v_tau_pTetaCut[iTau] = 1;
+            }
+            
+            
+            std::vector <double> *v_tau_iso_reco;
+            
+            if(!strcmp(tau_isoOption, "loose"))
+            {
+                //v_tau_iso_reco = input->v_tau_byLooseCombinedIsolationDeltaBetaCorr3HitsdR03_reco;
+                v_tau_iso_reco = input->v_tau_byLooseIsolationMVArun2v1DBdR03oldDMwLT_reco;
+            }
+            
+            else if(!strcmp(tau_isoOption, "medium"))
+            {
+                //v_tau_iso_reco = input->v_tau_byMediumCombinedIsolationDeltaBetaCorr3HitsdR03_reco;
+                v_tau_iso_reco = input->v_tau_byMediumIsolationMVArun2v1DBdR03oldDMwLT_reco;
+            }
+            
+            else if(!strcmp(tau_isoOption, "tight"))
+            {
+                //v_tau_iso_reco = input->v_tau_byTightCombinedIsolationDeltaBetaCorr3HitsdR03_reco;
+                v_tau_iso_reco = input->v_tau_byTightIsolationMVArun2v1DBdR03oldDMwLT_reco;
+            }
+            
+            else
+            {
+                printf("Wrong tau isolation option");
+                exit(EXIT_FAILURE);
+            }
+            
+            
+            // Get mu-tau pair
+            std::vector <int> muTau_pos = Common::getObjPair( \
+            &(input->v_mu_reco), \
+            &(input->v_tau_reco), \
+            {input->v_mu_isMediumMuon_reco, \
+                &v_mu_IPcut, \
+                v_mu_iso_reco, \
+                &v_mu_pTetacut}, \
+            {input->v_tau_byDecayModeFinding_reco, \
+                    input->v_tau_againstElectronLooseMVA6_reco, \
+                    input->v_tau_againstMuonTight3_reco, \
+                    v_tau_iso_reco, \
+                    &v_tau_pTetaCut}, \
+            Common::muTau_deltaRcut_reco, \
+            muTau_signOption);
+            
+            // At least one mu-tau pair
+            if(!muTau_pos.size())
+            {
+                continue;
+            }
+            
+            double eventWeight_common = 1;
+            
+            if(isMC)
+            {
+                // Get pile-up reweight factor
+                double pileUpReweightFactor = Common::getPileUpReweightFactor( \
+                    input->h1_pileUp_mc, input->h1_pileUp_data, \
+                    input->pileUp_n_reco);
+                
+                //printf("pileUp %d, pileUpReweightFactor %f \n", input->pileUp_n_reco, pileUpReweightFactor);
+                output_reco->h1_pileUpReweightFactor->Fill(pileUpReweightFactor);
+                
+                eventWeight_common *= pileUpReweightFactor;
+                
+                
+                // n-jet bin stitching event weight
+                if(v_eventWeight_nJetBin.size())
+                {
+                    double eventWeight_nJetBin = Common::getEventWeight_nJetBin(v_eventWeight_nJetBin, input->outgoingParton_n_gen);
+                    //printf("eventWeight_nJetBin: %d %f \n", input->outgoingParton_n_gen, eventWeight_nJetBin);
+                    
+                    eventWeight_common *= eventWeight_nJetBin;
+                }
+            }
+            
+            // MET
+            output_reco->h1_MET_E->Fill(input->MET_E_reco, eventWeight_common);
+            output_reco->h1_MET_phi->Fill(input->MET_phi_reco, eventWeight_common);
+            
+            // RECO tau
+            //output_reco->h1_tau_n->Fill(input->tau_n_reco, eventWeight_common);
+            
+            int tau_n_reco = 0;
+            
+            int tau_n_looseIso = 0, \
+                tau_n_mediumIso = 0, \
+                tau_n_tightIso = 0;
+            
+            double muTau_MET_mT2 = 0;
+            double muTau_MET_mT2_lsp0 = 0;
+            
+            double MET_pZeta = 0;
+            double muTau_pZeta = 0;
+            double muTau_MET_pZeta = 0;
+            
+            CLHEP::HepLorentzVector muTau_mu_4mom_reco, muTau_tau_4mom_reco;
+            
+            muTau_mu_4mom_reco.setT(fabs(input->v_mu_E_reco->at(muTau_pos[0])));
+            muTau_mu_4mom_reco.setX(input->v_mu_px_reco->at(muTau_pos[0]));
+            muTau_mu_4mom_reco.setY(input->v_mu_py_reco->at(muTau_pos[0]));
+            muTau_mu_4mom_reco.setZ(input->v_mu_pz_reco->at(muTau_pos[0]));
+            
+            muTau_tau_4mom_reco.setT(fabs(input->v_tau_E_reco->at(muTau_pos[1])));
+            muTau_tau_4mom_reco.setX(input->v_tau_px_reco->at(muTau_pos[1]));
+            muTau_tau_4mom_reco.setY(input->v_tau_py_reco->at(muTau_pos[1]));
+            muTau_tau_4mom_reco.setZ(input->v_tau_pz_reco->at(muTau_pos[1]));
+            
+            
+            output_reco->h1_muTau_mu_pT->Fill(muTau_mu_4mom_reco.perp(), eventWeight_common);
+            output_reco->h1_muTau_mu_eta->Fill(muTau_mu_4mom_reco.eta(), eventWeight_common);
+            
+            output_reco->h1_muTau_tau_pT->Fill(muTau_tau_4mom_reco.perp(), eventWeight_common);
+            output_reco->h1_muTau_tau_eta->Fill(muTau_tau_4mom_reco.eta(), eventWeight_common);
+            output_reco->h1_muTau_tau_m->Fill(muTau_tau_4mom_reco.m(), eventWeight_common);
+            
+            double lsp_m = 0;
+            
+            if(isSUSY)
+            {
+                lsp_m = input->neutralino1_m_genParam;
+            }
+            
+            muTau_MET_mT2 = asymm_mt2_lester_bisect::get_mT2( \
+                muTau_mu_4mom_reco.m(), muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py(), \
+                muTau_tau_4mom_reco.m(), muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py(), \
+                input->MET_E_reco*cos(input->MET_phi_reco), input->MET_E_reco*sin(input->MET_phi_reco), \
+                lsp_m, lsp_m);
+            
+            muTau_MET_mT2_lsp0 = asymm_mt2_lester_bisect::get_mT2( \
+                muTau_mu_4mom_reco.m(), muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py(), \
+                muTau_tau_4mom_reco.m(), muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py(), \
+                input->MET_E_reco*cos(input->MET_phi_reco), input->MET_E_reco*sin(input->MET_phi_reco), \
+                0, 0);
+            
+            output_reco->h1_muTau_m->Fill((muTau_mu_4mom_reco+muTau_tau_4mom_reco).m(), eventWeight_common);
+            output_reco->h1_muTau_deltaPhi->Fill(Common::getDeltaPhi(muTau_mu_4mom_reco.phi(), muTau_tau_4mom_reco.phi()), eventWeight_common);
+            output_reco->h1_muTau_deltaR->Fill(muTau_mu_4mom_reco.deltaR(muTau_tau_4mom_reco), eventWeight_common);
+            output_reco->h1_muTau_MET_mT2->Fill(muTau_MET_mT2, eventWeight_common);
+            output_reco->h1_muTau_MET_mT2_lsp0->Fill(muTau_MET_mT2_lsp0, eventWeight_common);
+            
+            output_reco->h2_muTau_MET_mT2_vs_MET_E->Fill(input->MET_E_reco, muTau_MET_mT2_lsp0, eventWeight_common);
+            
+            MET_pZeta = Common::getPzeta( \
+                {{input->MET_E_reco*cos(input->MET_phi_reco), input->MET_E_reco*sin(input->MET_phi_reco)}}, \
+                \
+                {muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py()}, \
+                {muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py()});
+            
+            muTau_pZeta = Common::getPzeta( \
+                {{muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py()}, \
+                    {muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py()}}, \
+                \
+                {muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py()}, \
+                {muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py()});
+            
+            muTau_MET_pZeta = Common::getPzeta( \
+                {{muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py()}, \
+                    {muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py()}, \
+                    {input->MET_E_reco*cos(input->MET_phi_reco), input->MET_E_reco*sin(input->MET_phi_reco)}}, \
+                \
+                {muTau_mu_4mom_reco.px(), muTau_mu_4mom_reco.py()}, \
+                {muTau_tau_4mom_reco.px(), muTau_tau_4mom_reco.py()});
+            
+            double muTau_MET_Dzeta = muTau_MET_pZeta - 1.85*muTau_pZeta;
+            
+            output_reco->h1_MET_pZeta->Fill(MET_pZeta, eventWeight_common);
+            output_reco->h1_muTau_pZeta->Fill(muTau_pZeta, eventWeight_common);
+            output_reco->h1_muTau_MET_pZeta->Fill(muTau_MET_pZeta, eventWeight_common);
+            output_reco->h1_muTau_MET_Dzeta->Fill(muTau_MET_Dzeta, eventWeight_common);
+            
+            output_reco->h2_muTau_MET_Dzeta_vs_MET_E->Fill(input->MET_E_reco, muTau_MET_Dzeta, eventWeight_common);
+            
+            
+            // RECO jet
+            //output_reco->h1_jet_n->Fill(input->jet_n_reco, eventWeight_common);
+            
+            int jet_n_reco = 0;
+            
+            int jet_n_pT20 = 0;
+            int jet_n_pT40 = 0;
+            int jet_n_pT60 = 0;
+            
+            int b_n_pT20 = 0;
+            int b_n_pT40 = 0;
+            int b_n_pT60 = 0;
+            
+            int b_n_loose = 0, \
+                b_n_medium = 0, \
+                b_n_tight = 0;
+            
+            double jet_pxSum_reco = 0;
+            double jet_pySum_reco = 0;
+            
+            double jet_HT_reco = 0;
+            double jet_MHT_reco = 0;
+            
+            double muTau_b_pxSum_reco = 0;
+            double muTau_b_pySum_reco = 0;
+            
+            double muTau_b_HT_reco = 0;
+            double muTau_b_MHT_reco = 0;
+            
+            double nonBjet1_pT = 0;
+            
+            int nonBjet_n_reco = 0;
+            
+            CLHEP::HepLorentzVector jet1_4mom_reco(0, 0, 0, 0);
+            CLHEP::HepLorentzVector jet2_4mom_reco(0, 0, 0, 0);
+            
+            CLHEP::HepLorentzVector b1_4mom_reco(0, 0, 0, 0);
+            CLHEP::HepLorentzVector b2_4mom_reco(0, 0, 0, 0);
+            
+            CLHEP::HepLorentzVector nonBjet1_4mom_reco(0, 0, 0, 0);
+            CLHEP::HepLorentzVector nonBjet2_4mom_reco(0, 0, 0, 0);
+            
+            for(int iJet = 0; iJet < input->jet_n_reco; iJet++)
+            {
+                CLHEP::HepLorentzVector jet_4mom_reco;
+                
+                jet_4mom_reco.setT(fabs(input->v_jet_E_reco->at(iJet)));
+                jet_4mom_reco.setX(input->v_jet_px_reco->at(iJet));
+                jet_4mom_reco.setY(input->v_jet_py_reco->at(iJet));
+                jet_4mom_reco.setZ(input->v_jet_pz_reco->at(iJet));
+                
+                if(jet_4mom_reco.perp() < Common::jet_pTcut_reco || fabs(jet_4mom_reco.eta()) > Common::jet_etaCut_reco)
+                {
+                    continue;
+                }
+                
+                // Remember to use dR of isolation variable
+                bool hasMuOverlap = jet_4mom_reco.deltaR(muTau_mu_4mom_reco) < 0.4;
+                bool hasTauOverlap = jet_4mom_reco.deltaR(muTau_tau_4mom_reco) < 0.3;
+                
+                if(hasMuOverlap || hasTauOverlap)
+                {
+                    continue;
+                }
+                
+                jet_n_reco++;
+                
+                if(jet_4mom_reco.perp() > 20)
+                {
+                    jet_n_pT20++;
+                }
+                
+                if(jet_4mom_reco.perp() > 40)
+                {
+                    jet_n_pT40++;
+                }
+                
+                if(jet_4mom_reco.perp() > 60)
+                {
+                    jet_n_pT60++;
+                }
+                
+                jet_pxSum_reco += input->v_jet_px_reco->at(iJet);
+                jet_pySum_reco += input->v_jet_py_reco->at(iJet);
+                
+                jet_HT_reco += jet_4mom_reco.perp();
+                
+                // Leading jet
+                if(jet_n_reco == 1)
+                {
+                    output_reco->h1_jet1_MET_deltaPhi->Fill(Common::getDeltaPhi(jet_4mom_reco.phi(), input->MET_phi_reco), eventWeight_common);
+                    
+                    jet1_4mom_reco = jet_4mom_reco;
+                }
+                
+                if(jet_n_reco == 2)
+                {
+                    jet2_4mom_reco = jet_4mom_reco;
+                }
+                
+                if(jet_n_reco && jet_n_reco <= 2)
+                {
+                    //output_reco->addJetHist(jet_n_reco);
+                    
+                    output_reco->v_h1_jet_pT[jet_n_reco-1]->Fill(jet_4mom_reco.perp(), eventWeight_common);
+                    output_reco->v_h1_jet_eta[jet_n_reco-1]->Fill(jet_4mom_reco.eta(), eventWeight_common);
+                    output_reco->v_h1_jet_phi[jet_n_reco-1]->Fill(jet_4mom_reco.phi(), eventWeight_common);
+                }
+                
+                // RECO b
+                if(jet_4mom_reco.perp() < Common::b_pTcut_reco || fabs(jet_4mom_reco.eta()) > Common::b_etaCut_reco)
+                {
+                    continue;
+                }
+                
+                /*if(isMC && !input->isGenMatched(jet_4mom_reco, "b", 0.3))
+                {
+                    continue;
+                }*/
+                
+                if(input->v_jet_byLoosePfCombinedInclusiveSecondaryVertexV2BJetTags_reco->at(iJet))
+                {
+                    output_reco->h1_b_pT_loose->Fill(jet_4mom_reco.perp(), eventWeight_common);
+                    output_reco->h1_b_eta_loose->Fill(jet_4mom_reco.eta(), eventWeight_common);
+                    
+                    b_n_loose++;
+                }
+                
+                if(input->v_jet_byMediumPfCombinedInclusiveSecondaryVertexV2BJetTags_reco->at(iJet))
+                {
+                    output_reco->h1_b_pT_medium->Fill(jet_4mom_reco.perp(), eventWeight_common);
+                    output_reco->h1_b_eta_medium->Fill(jet_4mom_reco.eta(), eventWeight_common);
+                    
+                    b_n_medium++;
+                    
+                    if(b_n_medium && b_n_medium <= 2)
+                    {
+                        output_reco->v_h1_b_pT[b_n_medium-1]->Fill(jet_4mom_reco.perp(), eventWeight_common);
+                        output_reco->v_h1_b_eta[b_n_medium-1]->Fill(jet_4mom_reco.eta(), eventWeight_common);
+                        output_reco->v_h1_b_phi[b_n_medium-1]->Fill(jet_4mom_reco.phi(), eventWeight_common);
+                    }
+                    
+                    if(jet_4mom_reco.perp() > b1_4mom_reco.perp())
+                    {
+                        b1_4mom_reco = jet_4mom_reco;
+                    }
+                    
+                    else if(jet_4mom_reco.perp() > b2_4mom_reco.perp())
+                    {
+                        b2_4mom_reco = jet_4mom_reco;
+                    }
+                    
+                    if(jet_4mom_reco.perp() > 20)
+                    {
+                        b_n_pT20++;
+                    }
+                    
+                    if(jet_4mom_reco.perp() > 40)
+                    {
+                        b_n_pT40++;
+                    }
+                    
+                    if(jet_4mom_reco.perp() > 60)
+                    {
+                        b_n_pT60++;
+                    }
+                    
+                    muTau_b_pxSum_reco += jet_4mom_reco.px();
+                    muTau_b_pySum_reco += jet_4mom_reco.py();
+                    muTau_b_HT_reco += jet_4mom_reco.perp();
+                }
+                
+                else
+                {
+                    nonBjet_n_reco++;
+                    
+                    if(nonBjet_n_reco && nonBjet_n_reco <= 2)
+                    {
+                        output_reco->v_h1_nonBjet_pT[nonBjet_n_reco-1]->Fill(jet_4mom_reco.perp(), eventWeight_common);
+                        output_reco->v_h1_nonBjet_eta[nonBjet_n_reco-1]->Fill(jet_4mom_reco.eta(), eventWeight_common);
+                        output_reco->v_h1_nonBjet_phi[nonBjet_n_reco-1]->Fill(jet_4mom_reco.phi(), eventWeight_common);
+                    }
+                    
+                    if(jet_4mom_reco.perp() > nonBjet1_4mom_reco.perp())
+                    {
+                        nonBjet1_4mom_reco = jet_4mom_reco;
+                    }
+                    
+                    else if(jet_4mom_reco.perp() > nonBjet2_4mom_reco.perp())
+                    {
+                        nonBjet2_4mom_reco = jet_4mom_reco;
+                    }
+                }
+                
+                if(input->v_jet_byTightPfCombinedInclusiveSecondaryVertexV2BJetTags_reco->at(iJet))
+                {
+                    output_reco->h1_b_pT_tight->Fill(jet_4mom_reco.perp(), eventWeight_common);
+                    output_reco->h1_b_eta_tight->Fill(jet_4mom_reco.eta(), eventWeight_common);
+                    
+                    b_n_tight++;
+                }
+            }
+            
+            output_reco->h1_jet_n->Fill(jet_n_reco, eventWeight_common);
+            
+            output_reco->h2_b_n_vs_jet_n_pT20->Fill(jet_n_pT20, b_n_pT20, eventWeight_common);
+            output_reco->h2_b_n_vs_jet_n_pT40->Fill(jet_n_pT40, b_n_pT40, eventWeight_common);
+            output_reco->h2_b_n_vs_jet_n_pT60->Fill(jet_n_pT60, b_n_pT60, eventWeight_common);
+            
+            if(jet_n_reco)
+            {
+                jet_MHT_reco = sqrt(jet_pxSum_reco*jet_pxSum_reco + jet_pySum_reco*jet_pySum_reco);
+                
+                output_reco->h1_jet_HT->Fill(jet_HT_reco, eventWeight_common);
+                output_reco->h1_jet_MHT->Fill(jet_MHT_reco, eventWeight_common);
+                output_reco->h1_jet_Meff->Fill(jet_HT_reco + jet_MHT_reco, eventWeight_common);
+                
+                output_reco->h1_b_n_by_jet_n->Fill((double) b_n_medium/jet_n_reco, eventWeight_common);
+            }
+            
+            if(jet_n_reco >= 2)
+            {
+                output_reco->h1_jet1_jet2_mT->Fill(Common::getMT(jet1_4mom_reco, jet2_4mom_reco), eventWeight_common);
+            }
+            
+            if(nonBjet_n_reco && jet_n_reco)
+            {
+                output_reco->h1_nonBjet1_pT_by_jet_HT->Fill(nonBjet1_4mom_reco.perp()/jet_HT_reco, eventWeight_common);
+            }
+            
+            if(b_n_medium && jet_n_reco)
+            {
+                output_reco->h1_b1_pT_by_jet_HT->Fill(b1_4mom_reco.perp()/jet_HT_reco, eventWeight_common);
+            }
+            
+            if(nonBjet_n_reco && b_n_medium)
+            {
+                output_reco->h1_nonBjet1_pT_by_b1_pT->Fill(nonBjet1_4mom_reco.perp() / b1_4mom_reco.perp(), eventWeight_common);
+            }
+            
+            // RECO b jet number
+            output_reco->h1_b_n_loose->Fill(b_n_loose, eventWeight_common);
+            output_reco->h1_b_n_medium->Fill(b_n_medium, eventWeight_common);
+            output_reco->h1_b_n_tight->Fill(b_n_tight, eventWeight_common);
+            
+            
+            muTau_b_pxSum_reco += muTau_mu_4mom_reco.px();
+            muTau_b_pxSum_reco += muTau_tau_4mom_reco.px();
+            
+            muTau_b_pySum_reco += muTau_mu_4mom_reco.py();
+            muTau_b_pySum_reco += muTau_tau_4mom_reco.py();
+            
+            muTau_b_HT_reco += muTau_mu_4mom_reco.perp();
+            muTau_b_HT_reco += muTau_tau_4mom_reco.perp();
+            
+            muTau_b_MHT_reco = sqrt(muTau_b_pxSum_reco*muTau_b_pxSum_reco + muTau_b_pySum_reco*muTau_b_pySum_reco);
+            
+            double muTau_jet_pxSum_reco = muTau_mu_4mom_reco.px() + muTau_tau_4mom_reco.px() + jet_pxSum_reco;
+            double muTau_jet_pySum_reco = muTau_mu_4mom_reco.py() + muTau_tau_4mom_reco.py() + jet_pySum_reco;
+            double muTau_jet_HT_reco = muTau_mu_4mom_reco.perp() + muTau_tau_4mom_reco.perp() + jet_HT_reco;
+            double muTau_jet_MHT_reco = sqrt(muTau_jet_pxSum_reco*muTau_jet_pxSum_reco + muTau_jet_pySum_reco*muTau_jet_pySum_reco);
+            
+            output_reco->h1_muTau_b_HT->Fill(muTau_b_HT_reco, eventWeight_common);
+            output_reco->h1_muTau_b_MHT->Fill(muTau_b_MHT_reco, eventWeight_common);
+            
+            output_reco->h1_muTau_jet_HT->Fill(muTau_jet_HT_reco, eventWeight_common);
+            output_reco->h1_muTau_jet_MHT->Fill(muTau_jet_MHT_reco, eventWeight_common);
+            
+            if(muTau_jet_HT_reco > 0)
+            {
+                output_reco->h1_muTau_b_HT_by_muTau_jet_HT->Fill(muTau_b_HT_reco/muTau_jet_HT_reco, eventWeight_common);
+            }
+            
+            else
+            {
+                output_reco->h1_muTau_b_HT_by_muTau_jet_HT->Fill(-1, eventWeight_common);
+            }
+            
+            if(muTau_jet_MHT_reco > 0)
+            {
+                output_reco->h1_muTau_b_MHT_by_muTau_jet_MHT->Fill(muTau_b_MHT_reco/muTau_jet_MHT_reco, eventWeight_common);
+            }
+            
+            else
+            {
+                output_reco->h1_muTau_b_MHT_by_muTau_jet_MHT->Fill(-1, eventWeight_common);
+            }
+            
+            
+            // cutFlows
+            
+            output_reco->incrementCutFlow( \
+                "SR1", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 50 && input->MET_E_reco < 200, \
+                    muTau_MET_mT2_lsp0 >= 0 && muTau_MET_mT2_lsp0 < 40, \
+                    b_n_medium >= 1},
+                eventWeight_common
+            );
+            
+            output_reco->incrementCutFlow( \
+                "SR2", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 200, \
+                    muTau_MET_mT2_lsp0 >= 0 && muTau_MET_mT2_lsp0 < 40, \
+                    b_n_medium >= 1},
+                eventWeight_common
+            );
+            
+            output_reco->incrementCutFlow( \
+                "SR3", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 50 && input->MET_E_reco < 200, \
+                    muTau_MET_mT2_lsp0 >= 40 && muTau_MET_mT2_lsp0 < 80, \
+                    b_n_medium >= 1},
+                eventWeight_common
+            );
+            
+            output_reco->incrementCutFlow( \
+                "SR4", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 200, \
+                    muTau_MET_mT2_lsp0 >= 40 && muTau_MET_mT2_lsp0 < 80, \
+                    b_n_medium >= 1},
+                eventWeight_common
+            );
+            
+            output_reco->incrementCutFlow( \
+                "SR5", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 50 && input->MET_E_reco < 200, \
+                    muTau_MET_mT2_lsp0 >= 80, \
+                    b_n_medium >= 1},
+                eventWeight_common
+            );
+            
+            output_reco->incrementCutFlow( \
+                "SR6", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 200, \
+                    muTau_MET_mT2_lsp0 >= 80, \
+                    b_n_medium >= 1},
+                eventWeight_common
+            );
+            
+            
+            /*output_reco->incrementCutFlow( \
+                "cutFlow1", 1, \
+                {(bool) muTau_pos.size(), \
+                    input->MET_E_reco >= 80, \
+                    muTau_MET_mT2_lsp0 >= 80, \
+                    b_n_medium >= 1, \
+                    input->MET_E_reco >= 100, \
+                    input->MET_E_reco >= 120, \
+                    muTau_MET_mT2_lsp0 >= 100}
+            );*/
+        }
+    }
+}
+
+
+# endif

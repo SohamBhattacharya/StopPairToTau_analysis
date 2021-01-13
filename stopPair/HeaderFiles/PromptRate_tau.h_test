@@ -1,0 +1,175 @@
+# ifndef PromptRate_tau_H
+# define PromptRate_tau_H
+
+# include "BTagCalibrationStandalone.h"
+# include "ElMuScaleFactor.h"
+# include "lester_mt2_bisect_mod.h"
+
+# include "Common.h"
+# include "CustomInfo_data.h"
+# include "CustomInfo_mc.h"
+# include "Output_GEN.h"
+# include "Output_RECO.h"
+# include "TauEfficiencyAndSF.h"
+# include "TemplateSmearing.h"
+
+
+namespace PromptRate_tau
+{
+    void initialize(
+        std::string process,
+        std::string dir,
+        std::string otherInfoDir,
+        std::string sourceFileName,
+        bool isMC,
+        std::vector <double> v_eventWeight_nJetBin
+    );
+    
+    void initialize(
+        std::string process,
+        std::string dir,
+        std::string otherInfoDir,
+        std::string sourceFileName,
+        bool isMC
+    );
+    
+    
+    template <typename T1> void analyze_reco(
+        T1 *input,
+        Output_RECO::Output *output_reco,
+        std::string tau_isoOption, std::vector <double> *v_tau_isolation,
+        bool isMC,
+        BTagCalibration *bTagCalib,
+        std::string fileName_bTaggingEfficiency,
+        TauEfficiencyAndSF::TauEfficiencyAndSF *tauEfficiencyObject,
+        std::vector <double> v_eventWeight_nJetBin
+    )
+    {
+        int nEvent = input->T_reco->GetEntries();
+        
+        output_reco->addTauHist(2);
+        output_reco->addbHist(2);
+        output_reco->addJetHist(2);
+        output_reco->addNonBjetHist(2);
+        
+        for (int iEvent = 0; iEvent < nEvent; iEvent++)
+        {
+            if(iEvent && iEvent % 1000 == 0)
+            {
+                printf("[%s] Processed event no. %d / %d \n", output_reco->nameAddon, iEvent, nEvent);
+                fflush(stdout);
+            }
+            
+            input->T_reco->GetEntry(iEvent);
+            
+            // Trigger
+            //if(!(input->isTriggerPassed_HLT_DoubleMediumIsoPFTau35_Trk1_eta2p1_Reg_v || input->isTriggerPassed_HLT_DoubleMediumCombinedIsoPFTau35_Trk1_eta2p1_Reg_v))
+            //{
+            //    continue;
+            //}
+            
+            double eventWeight_common = 1;
+            
+            if(isMC)
+            {
+                input->T_gen->GetEntry(iEvent);
+                
+                // n-jet bin stitching event weight
+                if(v_eventWeight_nJetBin.size())
+                {
+                    double eventWeight_nJetBin = Common::getEventWeight_nJetBin(v_eventWeight_nJetBin, input->outgoingParton_n_gen);
+                    //printf("eventWeight_nJetBin: %d %f \n", input->outgoingParton_n_gen, eventWeight_nJetBin);
+                    
+                    eventWeight_common *= eventWeight_nJetBin;
+                }
+                
+                
+                // Get pile-up reweight factor
+                //double pileUpReweightFactor = Common::getPileUpReweightFactor( \
+                //    input->h1_pileUp_mc, input->h1_pileUp_data, \
+                //    input->pileUp_n_reco);
+                //
+                ////printf("pileUp %d, pileUpReweightFactor %f \n", input->pileUp_n_reco, pileUpReweightFactor);
+                //output_reco->h1_pileUpReweightFactor->Fill(pileUpReweightFactor);
+                //
+                //eventWeight_common *= pileUpReweightFactor;
+            }
+            
+            
+            // Select tau pair
+            std::vector <double> v_tau_pTetaCut(input->tau_n_reco, 0);
+            std::vector <double> v_tau_IPcut(input->tau_n_reco, 0);
+            
+            for(int iTau = 0; iTau < input->tau_n_reco; iTau++)
+            {
+                CLHEP::HepLorentzVector tau_4mom_reco;
+                
+                tau_4mom_reco.setT(fabs(input->v_tau_E_reco->at(iTau)));
+                tau_4mom_reco.setX(input->v_tau_px_reco->at(iTau));
+                tau_4mom_reco.setY(input->v_tau_py_reco->at(iTau));
+                tau_4mom_reco.setZ(input->v_tau_pz_reco->at(iTau));
+                
+                if(tau_4mom_reco.perp() > Common::tau_pTcut_tauTau_reco && fabs(tau_4mom_reco.eta()) < Common::tau_etaCut_tauTau_reco)
+                {
+                    v_tau_pTetaCut.at(iTau) = 1;
+                }
+                
+                if(fabs(input->v_tau_dz_reco->at(iTau)) < Common::tau_dzCut_reco)
+                {
+                    v_tau_IPcut.at(iTau) = 1;
+                }
+            }
+            
+            
+            std::vector <std::vector <double> *> vv_tau1_selection = {
+                //input->v_tau_isTriggerMatched_reco,
+                input->v_tau_byDecayModeFinding_reco,
+                &v_tau_IPcut,
+                input->v_tau_againstElectronLooseMVA6_reco,
+                input->v_tau_againstMuonLoose3_reco,
+                v_tau1_isolation,
+                &v_tau_pTetaCut
+            };
+            
+            
+            std::vector <std::vector <bool> > vv_tau_isMatched = Common::isMatched(
+                &(input->v_tau_reco),
+                &(input->v_tau_vis_gen),
+                
+                vv_tau1_selection,
+                {},
+                
+                Common::tau_pTcut_tauTau_reco, Common::tau_etaCut_tauTau_reco,
+                Common::tau_pTcut_tauTau_reco, Common::tau_etaCut_tauTau_reco,
+                
+                0.3
+            );
+            
+            std::vector <double> v_tau_reco_isMatched = vv_tau_isMatched.at(0);
+            
+            for(int iTau = 0; iTau < input->tau_n_reco; iTau++)
+            {
+                if(!v_tau_reco_isMatched.at(iTau))
+                {
+                    continue;
+                }
+                
+                CLHEP::HepLorentzVector tau_4mom_reco(0, 0, 0, 0);
+                
+                tau_4mom_reco.setT(fabs(input->v_tau_E_reco->at(iTau)));
+                tau_4mom_reco.setX(input->v_tau_px_reco->at(iTau));
+                tau_4mom_reco.setY(input->v_tau_py_reco->at(iTau));
+                tau_4mom_reco.setZ(input->v_tau_pz_reco->at(iTau));
+                
+                
+                output_reco->h1_tau_pT->Fill(tau_4mom_reco.perp());
+                output_reco->h1_tau_eta->Fill(tau_4mom_reco.eta());
+                output_reco->h1_tau_phi->Fill(tau_4mom_reco.phi());
+                output_reco->h1_tau_m->Fill(tau_4mom_reco.m());
+            }
+        }
+    }
+}
+
+
+# endif

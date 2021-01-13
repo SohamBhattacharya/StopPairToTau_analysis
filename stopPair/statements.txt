@@ -1,0 +1,6 @@
+MET_JetResUp_E_reco = 0; MET_JetResUp_phi_reco = 0;
+MET_JetResDown_E_reco = 0; MET_JetResDown_phi_reco = 0;
+MET_JetEnUp_E_reco = 0; MET_JetEnUp_phi_reco = 0;
+MET_JetEnDown_E_reco = 0; MET_JetEnDown_phi_reco = 0;
+MET_UnclusteredEnUp_E_reco = 0; MET_UnclusteredEnUp_phi_reco = 0;
+MET_UnclusteredEnDown_E_reco = 0; MET_UnclusteredEnDown_phi_reco = 0;

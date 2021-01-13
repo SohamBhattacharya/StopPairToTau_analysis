@@ -1,0 +1,974 @@
+
+Processing TMVAClassification_mod.cc...
+
+==> Start TMVAClassification
+--- Factory                  : You are running ROOT Version: 6.06/06, Jul 6, 2016
+--- Factory                  : 
+--- Factory                  : _/_/_/_/_/ _|      _|  _|      _|    _|_|   
+--- Factory                  :    _/      _|_|  _|_|  _|      _|  _|    _| 
+--- Factory                  :   _/       _|  _|  _|  _|      _|  _|_|_|_| 
+--- Factory                  :  _/        _|      _|    _|  _|    _|    _| 
+--- Factory                  : _/         _|      _|      _|      _|    _| 
+--- Factory                  : 
+--- Factory                  : ___________TMVA Version 4.2.1, Feb 5, 2015
+--- Factory                  : 
+--- TMVAClassification       : Using input file: stopPair_mc/output_TMVAtree/SMS-T8bbstausnu_XCha0p5_XStau0p25_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_500_25_tauTau/custom_all_TMVAtree.root
+--- TMVAClassification       : Using input file: ttbar_mc/output_TMVAtree/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_tauTau/custom_all_TMVAtree.root
+--- DataSetInfo              : Added class "Signal"	 with internal class number 0
+--- Factory                  : Add Tree tree of type Signal with 1681 events
+--- DataSetInfo              : Added class "Background"	 with internal class number 1
+--- Factory                  : Add Tree tree of type Background with 2158 events
+--- Factory                  : Booking method: [1mFisher[0m
+--- Factory                  : Booking method: [1mMLP[0m
+--- MLP                      : Create Transformation "N" with events from all classes.
+--- Norm                     : Transformation, Variable selection : 
+--- Norm                     : Input : variable 'tau1_pT' (index=0).   <---> Output : variable 'tau1_pT' (index=0).
+--- Norm                     : Input : variable 'tau1_eta' (index=1).   <---> Output : variable 'tau1_eta' (index=1).
+--- Norm                     : Input : variable 'tau2_pT' (index=2).   <---> Output : variable 'tau2_pT' (index=2).
+--- Norm                     : Input : variable 'tau2_eta' (index=3).   <---> Output : variable 'tau2_eta' (index=3).
+--- Norm                     : Input : variable 'tauTau_m' (index=4).   <---> Output : variable 'tauTau_m' (index=4).
+--- Norm                     : Input : variable 'MET_E' (index=5).   <---> Output : variable 'MET_E' (index=5).
+--- Norm                     : Input : variable 'MET_phi' (index=6).   <---> Output : variable 'MET_phi' (index=6).
+--- Norm                     : Input : variable 'tauTau_MET_mT2_lsp0' (index=7).   <---> Output : variable 'tauTau_MET_mT2_lsp0' (index=7).
+--- Norm                     : Input : variable 'tauTau_MET_Dzeta' (index=8).   <---> Output : variable 'tauTau_MET_Dzeta' (index=8).
+--- Norm                     : Input : variable 'tauTau_jet_HT' (index=9).   <---> Output : variable 'tauTau_jet_HT' (index=9).
+--- Norm                     : Input : variable 'tauTau_jet_MHT' (index=10).   <---> Output : variable 'tauTau_jet_MHT' (index=10).
+--- Norm                     : Input : variable 'nonBjet_n' (index=11).   <---> Output : variable 'nonBjet_n' (index=11).
+--- Norm                     : Input : variable 'b_n' (index=12).   <---> Output : variable 'b_n' (index=12).
+--- Norm                     : Input : variable 'b1_pT' (index=13).   <---> Output : variable 'b1_pT' (index=13).
+--- Norm                     : Input : variable 'b1_eta' (index=14).   <---> Output : variable 'b1_eta' (index=14).
+--- Norm                     : Input : variable 'tau1_b1_deltaPhi' (index=15).   <---> Output : variable 'tau1_b1_deltaPhi' (index=15).
+--- MLP                      : Building Network
+--- MLP                      : Initializing weights
+--- Factory                  : Booking method: [1mBDTG[0m
+[1;31m--- <WARNING> BDTG                     : the option *InverseBoostNegWeights* does not exist for BoostType=Grad --> change to *IgnoreNegWeightsInTraining*[0m
+--- DataSetFactory           : Splitmode is: "RANDOM" the mixmode is: "SAMEASSPLITMODE"
+--- DataSetFactory           : Create training and testing trees -- looping over class "Signal" ...
+--- DataSetFactory           : Weight expression for class 'Signal': ""
+--- DataSetFactory           : Create training and testing trees -- looping over class "Background" ...
+--- DataSetFactory           : Weight expression for class 'Background': ""
+--- DataSetFactory           : Number of events in input trees (after possible flattening of arrays):
+--- DataSetFactory           :     Signal          -- number of events       : 1681   / sum of weights: 0.00989212
+--- DataSetFactory           :     Background      -- number of events       : 2158   / sum of weights: 0.0232858
+--- DataSetFactory           :     Signal     tree -- total number of entries: 1681 
+--- DataSetFactory           :     Background tree -- total number of entries: 2158 
+--- DataSetFactory           : Preselection: (will NOT affect number of requested training and testing events)
+--- DataSetFactory           :     No preselection cuts applied on event classes
+--- DataSetFactory           : Weight renormalisation mode: "EqualNumEvents": renormalises all event classes ...
+--- DataSetFactory           :  such that the effective (weighted) number of events in each class is the same 
+--- DataSetFactory           :  (and equals the number of events (entries) given for class=0 )
+--- DataSetFactory           : ... i.e. such that Sum[i=1..N_j]{w_i} = N_classA, j=classA, classB, ...
+--- DataSetFactory           : ... (note that N_j is the sum of TRAINING events
+--- DataSetFactory           :  ..... Testing events are not renormalised nor included in the renormalisation factor!)
+--- DataSetFactory           : --> Rescale Signal     event weights by factor: 169935
+--- DataSetFactory           : --> Rescale Background event weights by factor: 72145.3
+--- DataSetFactory           : Number of training and testing events after rescaling:
+--- DataSetFactory           : ------------------------------------------------------
+--- DataSetFactory           : Signal     -- training events            : 840 (sum of weights: 840) - requested were 0 events
+--- DataSetFactory           : Signal     -- testing events             : 840 (sum of weights: 0.00494306) - requested were 0 events
+--- DataSetFactory           : Signal     -- training and testing events: 1680 (sum of weights: 840.005)
+--- DataSetFactory           : Background -- training events            : 1079 (sum of weights: 840) - requested were 0 events
+--- DataSetFactory           : Background -- testing events             : 1079 (sum of weights: 0.0116432) - requested were 0 events
+--- DataSetFactory           : Background -- training and testing events: 2158 (sum of weights: 840.012)
+--- DataSetFactory           : Create internal training tree
+--- DataSetFactory           : Create internal testing tree
+--- DataSetInfo              : Correlation matrix (Signal):
+--- DataSetInfo              : ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- DataSetInfo              :                      tau1_pT tau1_eta tau2_pT tau2_eta tauTau_m   MET_E MET_phi tauTau_MET_mT2_lsp0 tauTau_MET_Dzeta tauTau_jet_HT tauTau_jet_MHT nonBjet_n     b_n   b1_pT  b1_eta tau1_b1_deltaPhi
+--- DataSetInfo              :             tau1_pT:  +1.000   +0.058  +0.485   +0.044   +0.738  -0.065  -0.009              -0.038           -0.093        +0.326         -0.047    -0.014  +0.017  -0.030  +0.066           -0.018
+--- DataSetInfo              :            tau1_eta:  +0.058   +1.000  +0.052   +0.278   +0.083  -0.030  -0.020              -0.020           +0.021        +0.038         -0.009    -0.008  +0.022  -0.038  +0.201           -0.011
+--- DataSetInfo              :             tau2_pT:  +0.485   +0.052  +1.000   -0.012   +0.719  -0.081  +0.000              -0.002           -0.062        +0.200         -0.087    +0.023  -0.009  -0.088  +0.030           -0.044
+--- DataSetInfo              :            tau2_eta:  +0.044   +0.278  -0.012   +1.000   +0.052  +0.006  -0.013              -0.001           -0.005        +0.031         +0.048    -0.024  +0.033  -0.054  +0.166           +0.041
+--- DataSetInfo              :            tauTau_m:  +0.738   +0.083  +0.719   +0.052   +1.000  -0.065  -0.013              -0.169           +0.009        +0.230         -0.050    -0.012  +0.004  -0.052  +0.046           -0.031
+--- DataSetInfo              :               MET_E:  -0.065   -0.030  -0.081   +0.006   -0.065  +1.000  -0.005              +0.105           +0.206        +0.296         +0.913    +0.149  +0.026  +0.081  +0.040           +0.013
+--- DataSetInfo              :             MET_phi:  -0.009   -0.020  +0.000   -0.013   -0.013  -0.005  +1.000              -0.004           -0.006        +0.004         +0.004    +0.024  -0.024  +0.042  +0.021           +0.065
+--- DataSetInfo              : tauTau_MET_mT2_lsp0:  -0.038   -0.020  -0.002   -0.001   -0.169  +0.105  -0.004              +1.000           -0.809        -0.094         +0.027    -0.034  +0.037  -0.100  +0.010           -0.027
+--- DataSetInfo              :    tauTau_MET_Dzeta:  -0.093   +0.021  -0.062   -0.005   +0.009  +0.206  -0.006              -0.809           +1.000        +0.176         +0.242    +0.100  -0.019  +0.111  +0.019           +0.026
+--- DataSetInfo              :       tauTau_jet_HT:  +0.326   +0.038  +0.200   +0.031   +0.230  +0.296  +0.004              -0.094           +0.176        +1.000         +0.333    +0.460  +0.056  +0.325  +0.056           +0.024
+--- DataSetInfo              :      tauTau_jet_MHT:  -0.047   -0.009  -0.087   +0.048   -0.050  +0.913  +0.004              +0.027           +0.242        +0.333         +1.000    +0.141  +0.009  +0.107  +0.029           +0.000
+--- DataSetInfo              :           nonBjet_n:  -0.014   -0.008  +0.023   -0.024   -0.012  +0.149  +0.024              -0.034           +0.100        +0.460         +0.141    +1.000  -0.198  -0.016  +0.016           +0.094
+--- DataSetInfo              :                 b_n:  +0.017   +0.022  -0.009   +0.033   +0.004  +0.026  -0.024              +0.037           -0.019        +0.056         +0.009    -0.198  +1.000  -0.331  -0.019           -0.008
+--- DataSetInfo              :               b1_pT:  -0.030   -0.038  -0.088   -0.054   -0.052  +0.081  +0.042              -0.100           +0.111        +0.325         +0.107    -0.016  -0.331  +1.000  +0.026           -0.023
+--- DataSetInfo              :              b1_eta:  +0.066   +0.201  +0.030   +0.166   +0.046  +0.040  +0.021              +0.010           +0.019        +0.056         +0.029    +0.016  -0.019  +0.026  +1.000           +0.050
+--- DataSetInfo              :    tau1_b1_deltaPhi:  -0.018   -0.011  -0.044   +0.041   -0.031  +0.013  +0.065              -0.027           +0.026        +0.024         +0.000    +0.094  -0.008  -0.023  +0.050           +1.000
+--- DataSetInfo              : ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- DataSetInfo              : Correlation matrix (Background):
+--- DataSetInfo              : ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- DataSetInfo              :                      tau1_pT tau1_eta tau2_pT tau2_eta tauTau_m   MET_E MET_phi tauTau_MET_mT2_lsp0 tauTau_MET_Dzeta tauTau_jet_HT tauTau_jet_MHT nonBjet_n     b_n   b1_pT  b1_eta tau1_b1_deltaPhi
+--- DataSetInfo              :             tau1_pT:  +1.000   +0.033  +0.449   -0.006   +0.654  +0.099  +0.017              -0.084           -0.030        +0.337         +0.127    +0.008  +0.020  +0.096  -0.043           +0.006
+--- DataSetInfo              :            tau1_eta:  +0.033   +1.000  +0.038   +0.241   +0.001  -0.052  -0.033              +0.002           -0.021        -0.001         -0.038    +0.004  -0.049  -0.011  +0.355           -0.071
+--- DataSetInfo              :             tau2_pT:  +0.449   +0.038  +1.000   +0.019   +0.640  +0.014  -0.022              -0.063           -0.010        +0.184         +0.032    -0.048  -0.017  +0.099  +0.007           +0.023
+--- DataSetInfo              :            tau2_eta:  -0.006   +0.241  +0.019   +1.000   +0.068  +0.008  -0.024              +0.044           -0.027        +0.003         +0.014    -0.002  -0.002  -0.006  +0.367           +0.032
+--- DataSetInfo              :            tauTau_m:  +0.654   +0.001  +0.640   +0.068   +1.000  +0.032  -0.036              -0.185           +0.051        +0.177         +0.068    -0.079  +0.028  +0.085  -0.008           +0.017
+--- DataSetInfo              :               MET_E:  +0.099   -0.052  +0.014   +0.008   +0.032  +1.000  +0.010              -0.048           +0.409        +0.417         +0.814    +0.137  +0.009  +0.108  -0.041           -0.005
+--- DataSetInfo              :             MET_phi:  +0.017   -0.033  -0.022   -0.024   -0.036  +0.010  +1.000              -0.026           +0.002        +0.046         +0.016    +0.038  +0.010  -0.033  -0.064           +0.056
+--- DataSetInfo              : tauTau_MET_mT2_lsp0:  -0.084   +0.002  -0.063   +0.044   -0.185  -0.048  -0.026              +1.000           -0.789        -0.138         -0.089    +0.007  -0.048  -0.058  +0.015           +0.035
+--- DataSetInfo              :    tauTau_MET_Dzeta:  -0.030   -0.021  -0.010   -0.027   +0.051  +0.409  +0.002              -0.789           +1.000        +0.243         +0.373    +0.046  +0.046  +0.036  -0.026           -0.032
+--- DataSetInfo              :       tauTau_jet_HT:  +0.337   -0.001  +0.184   +0.003   +0.177  +0.417  +0.046              -0.138           +0.243        +1.000         +0.504    +0.555  +0.121  +0.289  -0.044           -0.012
+--- DataSetInfo              :      tauTau_jet_MHT:  +0.127   -0.038  +0.032   +0.014   +0.068  +0.814  +0.016              -0.089           +0.373        +0.504         +1.000    +0.178  +0.027  +0.152  -0.039           -0.023
+--- DataSetInfo              :           nonBjet_n:  +0.008   +0.004  -0.048   -0.002   -0.079  +0.137  +0.038              +0.007           +0.046        +0.555         +0.178    +1.000  -0.174  +0.024  -0.018           -0.012
+--- DataSetInfo              :                 b_n:  +0.020   -0.049  -0.017   -0.002   +0.028  +0.009  +0.010              -0.048           +0.046        +0.121         +0.027    -0.174  +1.000  -0.248  -0.006           +0.030
+--- DataSetInfo              :               b1_pT:  +0.096   -0.011  +0.099   -0.006   +0.085  +0.108  -0.033              -0.058           +0.036        +0.289         +0.152    +0.024  -0.248  +1.000  +0.053           -0.067
+--- DataSetInfo              :              b1_eta:  -0.043   +0.355  +0.007   +0.367   -0.008  -0.041  -0.064              +0.015           -0.026        -0.044         -0.039    -0.018  -0.006  +0.053  +1.000           -0.066
+--- DataSetInfo              :    tau1_b1_deltaPhi:  +0.006   -0.071  +0.023   +0.032   +0.017  -0.005  +0.056              +0.035           -0.032        -0.012         -0.023    -0.012  +0.030  -0.067  -0.066           +1.000
+--- DataSetInfo              : ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- DataSetFactory           :  
+--- Factory                  : Booking method: [1mBDT[0m
+--- Factory                  : 
+--- Factory                  : current transformation string: 'I'
+--- Factory                  : Create Transformation "I" with events from all classes.
+--- Id                       : Transformation, Variable selection : 
+--- Id                       : Input : variable 'tau1_pT' (index=0).   <---> Output : variable 'tau1_pT' (index=0).
+--- Id                       : Input : variable 'tau1_eta' (index=1).   <---> Output : variable 'tau1_eta' (index=1).
+--- Id                       : Input : variable 'tau2_pT' (index=2).   <---> Output : variable 'tau2_pT' (index=2).
+--- Id                       : Input : variable 'tau2_eta' (index=3).   <---> Output : variable 'tau2_eta' (index=3).
+--- Id                       : Input : variable 'tauTau_m' (index=4).   <---> Output : variable 'tauTau_m' (index=4).
+--- Id                       : Input : variable 'MET_E' (index=5).   <---> Output : variable 'MET_E' (index=5).
+--- Id                       : Input : variable 'MET_phi' (index=6).   <---> Output : variable 'MET_phi' (index=6).
+--- Id                       : Input : variable 'tauTau_MET_mT2_lsp0' (index=7).   <---> Output : variable 'tauTau_MET_mT2_lsp0' (index=7).
+--- Id                       : Input : variable 'tauTau_MET_Dzeta' (index=8).   <---> Output : variable 'tauTau_MET_Dzeta' (index=8).
+--- Id                       : Input : variable 'tauTau_jet_HT' (index=9).   <---> Output : variable 'tauTau_jet_HT' (index=9).
+--- Id                       : Input : variable 'tauTau_jet_MHT' (index=10).   <---> Output : variable 'tauTau_jet_MHT' (index=10).
+--- Id                       : Input : variable 'nonBjet_n' (index=11).   <---> Output : variable 'nonBjet_n' (index=11).
+--- Id                       : Input : variable 'b_n' (index=12).   <---> Output : variable 'b_n' (index=12).
+--- Id                       : Input : variable 'b1_pT' (index=13).   <---> Output : variable 'b1_pT' (index=13).
+--- Id                       : Input : variable 'b1_eta' (index=14).   <---> Output : variable 'b1_eta' (index=14).
+--- Id                       : Input : variable 'tau1_b1_deltaPhi' (index=15).   <---> Output : variable 'tau1_b1_deltaPhi' (index=15).
+--- Factory                  : 
+--- Factory                  : current transformation string: 'D'
+--- Factory                  : Create Transformation "D" with events from all classes.
+--- Deco                     : Transformation, Variable selection : 
+--- Deco                     : Input : variable 'tau1_pT' (index=0).   <---> Output : variable 'tau1_pT' (index=0).
+--- Deco                     : Input : variable 'tau1_eta' (index=1).   <---> Output : variable 'tau1_eta' (index=1).
+--- Deco                     : Input : variable 'tau2_pT' (index=2).   <---> Output : variable 'tau2_pT' (index=2).
+--- Deco                     : Input : variable 'tau2_eta' (index=3).   <---> Output : variable 'tau2_eta' (index=3).
+--- Deco                     : Input : variable 'tauTau_m' (index=4).   <---> Output : variable 'tauTau_m' (index=4).
+--- Deco                     : Input : variable 'MET_E' (index=5).   <---> Output : variable 'MET_E' (index=5).
+--- Deco                     : Input : variable 'MET_phi' (index=6).   <---> Output : variable 'MET_phi' (index=6).
+--- Deco                     : Input : variable 'tauTau_MET_mT2_lsp0' (index=7).   <---> Output : variable 'tauTau_MET_mT2_lsp0' (index=7).
+--- Deco                     : Input : variable 'tauTau_MET_Dzeta' (index=8).   <---> Output : variable 'tauTau_MET_Dzeta' (index=8).
+--- Deco                     : Input : variable 'tauTau_jet_HT' (index=9).   <---> Output : variable 'tauTau_jet_HT' (index=9).
+--- Deco                     : Input : variable 'tauTau_jet_MHT' (index=10).   <---> Output : variable 'tauTau_jet_MHT' (index=10).
+--- Deco                     : Input : variable 'nonBjet_n' (index=11).   <---> Output : variable 'nonBjet_n' (index=11).
+--- Deco                     : Input : variable 'b_n' (index=12).   <---> Output : variable 'b_n' (index=12).
+--- Deco                     : Input : variable 'b1_pT' (index=13).   <---> Output : variable 'b1_pT' (index=13).
+--- Deco                     : Input : variable 'b1_eta' (index=14).   <---> Output : variable 'b1_eta' (index=14).
+--- Deco                     : Input : variable 'tau1_b1_deltaPhi' (index=15).   <---> Output : variable 'tau1_b1_deltaPhi' (index=15).
+--- Factory                  : 
+--- Factory                  : current transformation string: 'P'
+--- Factory                  : Create Transformation "P" with events from all classes.
+--- PCA                      : Transformation, Variable selection : 
+--- PCA                      : Input : variable 'tau1_pT' (index=0).   <---> Output : variable 'tau1_pT' (index=0).
+--- PCA                      : Input : variable 'tau1_eta' (index=1).   <---> Output : variable 'tau1_eta' (index=1).
+--- PCA                      : Input : variable 'tau2_pT' (index=2).   <---> Output : variable 'tau2_pT' (index=2).
+--- PCA                      : Input : variable 'tau2_eta' (index=3).   <---> Output : variable 'tau2_eta' (index=3).
+--- PCA                      : Input : variable 'tauTau_m' (index=4).   <---> Output : variable 'tauTau_m' (index=4).
+--- PCA                      : Input : variable 'MET_E' (index=5).   <---> Output : variable 'MET_E' (index=5).
+--- PCA                      : Input : variable 'MET_phi' (index=6).   <---> Output : variable 'MET_phi' (index=6).
+--- PCA                      : Input : variable 'tauTau_MET_mT2_lsp0' (index=7).   <---> Output : variable 'tauTau_MET_mT2_lsp0' (index=7).
+--- PCA                      : Input : variable 'tauTau_MET_Dzeta' (index=8).   <---> Output : variable 'tauTau_MET_Dzeta' (index=8).
+--- PCA                      : Input : variable 'tauTau_jet_HT' (index=9).   <---> Output : variable 'tauTau_jet_HT' (index=9).
+--- PCA                      : Input : variable 'tauTau_jet_MHT' (index=10).   <---> Output : variable 'tauTau_jet_MHT' (index=10).
+--- PCA                      : Input : variable 'nonBjet_n' (index=11).   <---> Output : variable 'nonBjet_n' (index=11).
+--- PCA                      : Input : variable 'b_n' (index=12).   <---> Output : variable 'b_n' (index=12).
+--- PCA                      : Input : variable 'b1_pT' (index=13).   <---> Output : variable 'b1_pT' (index=13).
+--- PCA                      : Input : variable 'b1_eta' (index=14).   <---> Output : variable 'b1_eta' (index=14).
+--- PCA                      : Input : variable 'tau1_b1_deltaPhi' (index=15).   <---> Output : variable 'tau1_b1_deltaPhi' (index=15).
+--- Factory                  : 
+--- Factory                  : current transformation string: 'G,D'
+--- Factory                  : Create Transformation "G" with events from all classes.
+--- Gauss                    : Transformation, Variable selection : 
+--- Gauss                    : Input : variable 'tau1_pT' (index=0).   <---> Output : variable 'tau1_pT' (index=0).
+--- Gauss                    : Input : variable 'tau1_eta' (index=1).   <---> Output : variable 'tau1_eta' (index=1).
+--- Gauss                    : Input : variable 'tau2_pT' (index=2).   <---> Output : variable 'tau2_pT' (index=2).
+--- Gauss                    : Input : variable 'tau2_eta' (index=3).   <---> Output : variable 'tau2_eta' (index=3).
+--- Gauss                    : Input : variable 'tauTau_m' (index=4).   <---> Output : variable 'tauTau_m' (index=4).
+--- Gauss                    : Input : variable 'MET_E' (index=5).   <---> Output : variable 'MET_E' (index=5).
+--- Gauss                    : Input : variable 'MET_phi' (index=6).   <---> Output : variable 'MET_phi' (index=6).
+--- Gauss                    : Input : variable 'tauTau_MET_mT2_lsp0' (index=7).   <---> Output : variable 'tauTau_MET_mT2_lsp0' (index=7).
+--- Gauss                    : Input : variable 'tauTau_MET_Dzeta' (index=8).   <---> Output : variable 'tauTau_MET_Dzeta' (index=8).
+--- Gauss                    : Input : variable 'tauTau_jet_HT' (index=9).   <---> Output : variable 'tauTau_jet_HT' (index=9).
+--- Gauss                    : Input : variable 'tauTau_jet_MHT' (index=10).   <---> Output : variable 'tauTau_jet_MHT' (index=10).
+--- Gauss                    : Input : variable 'nonBjet_n' (index=11).   <---> Output : variable 'nonBjet_n' (index=11).
+--- Gauss                    : Input : variable 'b_n' (index=12).   <---> Output : variable 'b_n' (index=12).
+--- Gauss                    : Input : variable 'b1_pT' (index=13).   <---> Output : variable 'b1_pT' (index=13).
+--- Gauss                    : Input : variable 'b1_eta' (index=14).   <---> Output : variable 'b1_eta' (index=14).
+--- Gauss                    : Input : variable 'tau1_b1_deltaPhi' (index=15).   <---> Output : variable 'tau1_b1_deltaPhi' (index=15).
+--- Factory                  : Create Transformation "D" with events from all classes.
+--- Deco                     : Transformation, Variable selection : 
+--- Deco                     : Input : variable 'tau1_pT' (index=0).   <---> Output : variable 'tau1_pT' (index=0).
+--- Deco                     : Input : variable 'tau1_eta' (index=1).   <---> Output : variable 'tau1_eta' (index=1).
+--- Deco                     : Input : variable 'tau2_pT' (index=2).   <---> Output : variable 'tau2_pT' (index=2).
+--- Deco                     : Input : variable 'tau2_eta' (index=3).   <---> Output : variable 'tau2_eta' (index=3).
+--- Deco                     : Input : variable 'tauTau_m' (index=4).   <---> Output : variable 'tauTau_m' (index=4).
+--- Deco                     : Input : variable 'MET_E' (index=5).   <---> Output : variable 'MET_E' (index=5).
+--- Deco                     : Input : variable 'MET_phi' (index=6).   <---> Output : variable 'MET_phi' (index=6).
+--- Deco                     : Input : variable 'tauTau_MET_mT2_lsp0' (index=7).   <---> Output : variable 'tauTau_MET_mT2_lsp0' (index=7).
+--- Deco                     : Input : variable 'tauTau_MET_Dzeta' (index=8).   <---> Output : variable 'tauTau_MET_Dzeta' (index=8).
+--- Deco                     : Input : variable 'tauTau_jet_HT' (index=9).   <---> Output : variable 'tauTau_jet_HT' (index=9).
+--- Deco                     : Input : variable 'tauTau_jet_MHT' (index=10).   <---> Output : variable 'tauTau_jet_MHT' (index=10).
+--- Deco                     : Input : variable 'nonBjet_n' (index=11).   <---> Output : variable 'nonBjet_n' (index=11).
+--- Deco                     : Input : variable 'b_n' (index=12).   <---> Output : variable 'b_n' (index=12).
+--- Deco                     : Input : variable 'b1_pT' (index=13).   <---> Output : variable 'b1_pT' (index=13).
+--- Deco                     : Input : variable 'b1_eta' (index=14).   <---> Output : variable 'b1_eta' (index=14).
+--- Deco                     : Input : variable 'tau1_b1_deltaPhi' (index=15).   <---> Output : variable 'tau1_b1_deltaPhi' (index=15).
+--- Id                       : Preparing the Identity transformation...
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :             tau1_pT:               111.07               65.658   [               40.815               484.69 ]
+--- TFHandler_Factory        :            tau1_eta:            0.0023219              0.85136   [              -2.1000               2.0843 ]
+--- TFHandler_Factory        :             tau2_pT:               63.591               28.261   [               40.007               285.65 ]
+--- TFHandler_Factory        :            tau2_eta:            0.0083350              0.89234   [              -2.0695               2.0973 ]
+--- TFHandler_Factory        :            tauTau_m:               161.87               87.250   [               24.882               820.84 ]
+--- TFHandler_Factory        :               MET_E:               156.05               103.71   [               50.056               990.69 ]
+--- TFHandler_Factory        :             MET_phi:             0.024513               1.8540   [              -3.1395               3.1387 ]
+--- TFHandler_Factory        : tauTau_MET_mT2_lsp0:               39.132               45.316   [              0.16660               239.15 ]
+--- TFHandler_Factory        :    tauTau_MET_Dzeta:              -48.304               127.44   [              -508.43               697.82 ]
+--- TFHandler_Factory        :       tauTau_jet_HT:               566.60               309.03   [               110.55               2387.6 ]
+--- TFHandler_Factory        :      tauTau_jet_MHT:               149.88               107.50   [               2.9774               1015.8 ]
+--- TFHandler_Factory        :           nonBjet_n:               2.2071               1.5568   [               0.0000               10.000 ]
+--- TFHandler_Factory        :                 b_n:               1.4348              0.52741   [               1.0000               4.0000 ]
+--- TFHandler_Factory        :               b1_pT:               112.73               94.339   [               20.041               983.69 ]
+--- TFHandler_Factory        :              b1_eta:            -0.049395               1.0029   [              -2.3888               2.3864 ]
+--- TFHandler_Factory        :    tau1_b1_deltaPhi:             0.023678               1.6492   [              -3.1345               3.1412 ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        : Plot event variables for Id
+--- TFHandler_Factory        : Create scatter and profile plots in target-file directory: 
+--- TFHandler_Factory        : TMVA.root:/InputVariables_Id/CorrelationPlots
+--- Deco                     : Preparing the Decorrelation transformation...
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :             tau1_pT:              0.47166               1.0000   [              -2.3887               6.7347 ]
+--- TFHandler_Factory        :            tau1_eta:            0.0016129               1.0000   [              -2.6399               2.7912 ]
+--- TFHandler_Factory        :             tau2_pT:               1.2960               1.0000   [              -2.3995               8.4181 ]
+--- TFHandler_Factory        :            tau2_eta:             0.026138               1.0000   [              -2.5321               2.4604 ]
+--- TFHandler_Factory        :            tauTau_m:               1.2611               1.0000   [              -2.0307               8.4724 ]
+--- TFHandler_Factory        :               MET_E:              0.87977               1.0000   [              -3.1068               7.3812 ]
+--- TFHandler_Factory        :             MET_phi:           -0.0081263               1.0000   [              -1.8412               1.8685 ]
+--- TFHandler_Factory        : tauTau_MET_mT2_lsp0:              0.49205               1.0000   [              -3.9386               5.6222 ]
+--- TFHandler_Factory        :    tauTau_MET_Dzeta:             -0.32949               1.0000   [              -5.5499               6.4672 ]
+--- TFHandler_Factory        :       tauTau_jet_HT:               1.4828               1.0000   [              0.12252               8.0550 ]
+--- TFHandler_Factory        :      tauTau_jet_MHT:              0.42920               1.0000   [              -2.8490               6.8694 ]
+--- TFHandler_Factory        :           nonBjet_n:               1.4973               1.0000   [              -3.3734               5.5437 ]
+--- TFHandler_Factory        :                 b_n:               3.3051               1.0000   [              -1.1566               8.5120 ]
+--- TFHandler_Factory        :               b1_pT:              0.58130               1.0000   [              -2.5410               9.7080 ]
+--- TFHandler_Factory        :              b1_eta:            -0.083154               1.0000   [              -2.7667               2.5723 ]
+--- TFHandler_Factory        :    tau1_b1_deltaPhi:             0.031777               1.0000   [              -1.9288               2.0604 ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        : Plot event variables for Deco
+--- TFHandler_Factory        : Create scatter and profile plots in target-file directory: 
+--- TFHandler_Factory        : TMVA.root:/InputVariables_Deco/CorrelationPlots
+--- PCA                      : Preparing the Principle Component (PCA) transformation...
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :             tau1_pT:               24.548               327.53   [              -466.59               1971.3 ]
+--- TFHandler_Factory        :            tau1_eta:               2.6099               136.09   [              -955.21               535.87 ]
+--- TFHandler_Factory        :             tau2_pT:               3.5687               117.55   [              -368.93               618.17 ]
+--- TFHandler_Factory        :            tau2_eta:              -1.0827               93.644   [              -599.87               328.92 ]
+--- TFHandler_Factory        :            tauTau_m:              -1.7630               80.163   [              -703.22               380.48 ]
+--- TFHandler_Factory        :               MET_E:              0.36717               35.309   [              -178.75               195.95 ]
+--- TFHandler_Factory        :             MET_phi:             -0.22895               30.672   [              -135.73               204.00 ]
+--- TFHandler_Factory        : tauTau_MET_mT2_lsp0:              0.35781               20.964   [              -119.80               102.83 ]
+--- TFHandler_Factory        :    tauTau_MET_Dzeta:             -0.12748               17.110   [              -94.596               70.074 ]
+--- TFHandler_Factory        :       tauTau_jet_HT:           0.00025643               1.8648   [              -3.7529               3.7265 ]
+--- TFHandler_Factory        :      tauTau_jet_MHT:            0.0019567               1.6340   [              -3.6632               3.6602 ]
+--- TFHandler_Factory        :           nonBjet_n:           -0.0075449               1.3029   [              -5.5364               4.8246 ]
+--- TFHandler_Factory        :                 b_n:           -0.0028811               1.1479   [              -3.0026               3.2674 ]
+--- TFHandler_Factory        :               b1_pT:            0.0023228              0.79701   [              -2.5800               3.0850 ]
+--- TFHandler_Factory        :              b1_eta:          -0.00093866              0.74239   [              -2.2987               2.2197 ]
+--- TFHandler_Factory        :    tau1_b1_deltaPhi:           -0.0052035              0.45435   [              -2.3607               2.4333 ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        : Plot event variables for PCA
+--- TFHandler_Factory        : Create scatter and profile plots in target-file directory: 
+--- TFHandler_Factory        : TMVA.root:/InputVariables_PCA/CorrelationPlots
+--- Gauss                    : Preparing the Gaussian transformation...
+--- Deco                     : Preparing the Decorrelation transformation...
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        :             tau1_pT:            -0.012435               1.0000   [              -3.4480               7.0388 ]
+--- TFHandler_Factory        :            tau1_eta:             0.019213               1.0000   [              -2.5794               6.0460 ]
+--- TFHandler_Factory        :             tau2_pT:             0.010567               1.0000   [              -3.3248               5.8097 ]
+--- TFHandler_Factory        :            tau2_eta:            0.0048501               1.0000   [              -2.8345               5.9008 ]
+--- TFHandler_Factory        :            tauTau_m:           -0.0083904               1.0000   [              -3.1783               6.0825 ]
+--- TFHandler_Factory        :               MET_E:           -0.0041676               1.0000   [              -4.1955               3.7041 ]
+--- TFHandler_Factory        :             MET_phi:             0.032598               1.0000   [              -2.6997               5.7073 ]
+--- TFHandler_Factory        : tauTau_MET_mT2_lsp0:             0.034136               1.0000   [              -3.9778               6.9596 ]
+--- TFHandler_Factory        :    tauTau_MET_Dzeta:             0.034550               1.0000   [              -3.6787               7.8701 ]
+--- TFHandler_Factory        :       tauTau_jet_HT:              0.20906               1.0000   [              -2.0866               8.5122 ]
+--- TFHandler_Factory        :      tauTau_jet_MHT:             0.027072               1.0000   [              -3.8873               6.8919 ]
+--- TFHandler_Factory        :           nonBjet_n:             -0.29451               1.0000   [              -3.3267               3.4260 ]
+--- TFHandler_Factory        :                 b_n:             -0.59276               1.0000   [              -3.5736               11.924 ]
+--- TFHandler_Factory        :               b1_pT:            -0.093006               1.0000   [              -3.4324               5.6473 ]
+--- TFHandler_Factory        :              b1_eta:             0.025553               1.0000   [              -2.9637               5.7841 ]
+--- TFHandler_Factory        :    tau1_b1_deltaPhi:             0.024413               1.0000   [              -2.8006               5.6731 ]
+--- TFHandler_Factory        : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Factory        : Plot event variables for Gauss_Deco
+--- TFHandler_Factory        : Create scatter and profile plots in target-file directory: 
+--- TFHandler_Factory        : TMVA.root:/InputVariables_Gauss_Deco/CorrelationPlots
+--- TFHandler_Factory        :  
+--- TFHandler_Factory        : Ranking input variables (method unspecific)...
+--- IdTransformation         : Ranking result (top variable is best ranked)
+--- IdTransformation         : --------------------------------------------
+--- IdTransformation         : Rank : Variable            : Separation
+--- IdTransformation         : --------------------------------------------
+--- IdTransformation         :    1 : tauTau_jet_HT       : 4.491e-01
+--- IdTransformation         :    2 : MET_E               : 3.256e-01
+--- IdTransformation         :    3 : tauTau_jet_MHT      : 3.113e-01
+--- IdTransformation         :    4 : b1_pT               : 2.545e-01
+--- IdTransformation         :    5 : tauTau_MET_Dzeta    : 2.506e-01
+--- IdTransformation         :    6 : tau1_pT             : 2.416e-01
+--- IdTransformation         :    7 : tauTau_MET_mT2_lsp0 : 1.847e-01
+--- IdTransformation         :    8 : tau2_pT             : 1.655e-01
+--- IdTransformation         :    9 : tauTau_m            : 1.084e-01
+--- IdTransformation         :   10 : tau1_eta            : 3.945e-02
+--- IdTransformation         :   11 : tau2_eta            : 2.426e-02
+--- IdTransformation         :   12 : b1_eta              : 2.296e-02
+--- IdTransformation         :   13 : nonBjet_n           : 1.966e-02
+--- IdTransformation         :   14 : tau1_b1_deltaPhi    : 1.847e-02
+--- IdTransformation         :   15 : b_n                 : 1.700e-02
+--- IdTransformation         :   16 : MET_phi             : 1.649e-02
+--- IdTransformation         : --------------------------------------------
+--- Factory                  :  
+--- Factory                  : Train all methods for Classification ...
+--- Factory                  : Train method: Fisher for Classification
+--- Fisher                   : 
+--- Fisher                   : [1m================================================================[0m
+--- Fisher                   : [1mH e l p   f o r   M V A   m e t h o d   [ Fisher ] :[0m
+--- Fisher                   : 
+--- Fisher                   : [1m--- Short description:[0m
+--- Fisher                   : 
+--- Fisher                   : Fisher discriminants select events by distinguishing the mean 
+--- Fisher                   : values of the signal and background distributions in a trans- 
+--- Fisher                   : formed variable space where linear correlations are removed.
+--- Fisher                   : 
+--- Fisher                   :    (More precisely: the "linear discriminator" determines
+--- Fisher                   :     an axis in the (correlated) hyperspace of the input 
+--- Fisher                   :     variables such that, when projecting the output classes 
+--- Fisher                   :     (signal and background) upon this axis, they are pushed 
+--- Fisher                   :     as far as possible away from each other, while events
+--- Fisher                   :     of a same class are confined in a close vicinity. The  
+--- Fisher                   :     linearity property of this classifier is reflected in the 
+--- Fisher                   :     metric with which "far apart" and "close vicinity" are 
+--- Fisher                   :     determined: the covariance matrix of the discriminating
+--- Fisher                   :     variable space.)
+--- Fisher                   : 
+--- Fisher                   : [1m--- Performance optimisation:[0m
+--- Fisher                   : 
+--- Fisher                   : Optimal performance for Fisher discriminants is obtained for 
+--- Fisher                   : linearly correlated Gaussian-distributed variables. Any deviation
+--- Fisher                   : from this ideal reduces the achievable separation power. In 
+--- Fisher                   : particular, no discrimination at all is achieved for a variable
+--- Fisher                   : that has the same sample mean for signal and background, even if 
+--- Fisher                   : the shapes of the distributions are very different. Thus, Fisher 
+--- Fisher                   : discriminants often benefit from suitable transformations of the 
+--- Fisher                   : input variables. For example, if a variable x in [-1,1] has a 
+--- Fisher                   : a parabolic signal distributions, and a uniform background
+--- Fisher                   : distributions, their mean value is zero in both cases, leading 
+--- Fisher                   : to no separation. The simple transformation x -> |x| renders this 
+--- Fisher                   : variable powerful for the use in a Fisher discriminant.
+--- Fisher                   : 
+--- Fisher                   : [1m--- Performance tuning via configuration options:[0m
+--- Fisher                   : 
+--- Fisher                   : <None>
+--- Fisher                   : 
+--- Fisher                   : <Suppress this message by specifying "!H" in the booking option>
+--- Fisher                   : [1m================================================================[0m
+--- Fisher                   : 
+--- Fisher                   : Begin training
+--- Fisher                   : Results for Fisher coefficients:
+--- Fisher                   : -----------------------------------------
+--- Fisher                   :            Variable:         Coefficient:
+--- Fisher                   : -----------------------------------------
+--- Fisher                   :             tau1_pT:              +0.004
+--- Fisher                   :            tau1_eta:              +0.019
+--- Fisher                   :             tau2_pT:              +0.007
+--- Fisher                   :            tau2_eta:              +0.009
+--- Fisher                   :            tauTau_m:              -0.001
+--- Fisher                   :               MET_E:              +0.002
+--- Fisher                   :             MET_phi:              -0.001
+--- Fisher                   : tauTau_MET_mT2_lsp0:              +0.005
+--- Fisher                   :    tauTau_MET_Dzeta:              -0.000
+--- Fisher                   :       tauTau_jet_HT:              +0.000
+--- Fisher                   :      tauTau_jet_MHT:              +0.001
+--- Fisher                   :           nonBjet_n:              +0.001
+--- Fisher                   :                 b_n:              +0.229
+--- Fisher                   :               b1_pT:              +0.003
+--- Fisher                   :              b1_eta:              -0.041
+--- Fisher                   :    tau1_b1_deltaPhi:              +0.008
+--- Fisher                   :            (offset):              -2.147
+--- Fisher                   : -----------------------------------------
+--- Fisher                   : End of training                                              
+--- Fisher                   : Elapsed time for training with 1919 events: [1;31m0.00514 sec[0m         
+--- Fisher                   : Create MVA output for classification on training sample
+--- Fisher                   : Evaluation of Fisher on training sample (1919 events)
+--- Fisher                   : Elapsed time for evaluation of 1919 events: [1;31m0.0189 sec[0m       
+--- Fisher_PDFSig            : Validation result for PDF "Fisher_tr_S": 
+--- Fisher_PDFSig            :     chi2/ndof(!=0) = 37.6/34 = 1.11 (Prob = 0.31)
+--- Fisher_PDFSig            :     #bins-found(#expected-bins) deviating > [1,2,3,6] sigmas: [9(10),1(1),1(0),0(0)]
+--- Fisher_PDFBkg            : Validation result for PDF "Fisher_tr_B": 
+--- Fisher_PDFBkg            :     chi2/ndof(!=0) = 24.8/21 = 1.18 (Prob = 0.26)
+--- Fisher_PDFBkg            :     #bins-found(#expected-bins) deviating > [1,2,3,6] sigmas: [7(6),2(0),0(0),0(0)]
+[1;31m--- <WARNING> Fisher                   : could not calculate the separation, distributions fSplS or fSplB are not yet filled[0m
+--- Fisher                   : <CreateMVAPdfs> Separation from histogram (PDF): 0.658 (0.000)
+--- Fisher                   : Evaluation of Fisher on training sample
+--- Fisher                   : Elapsed time for evaluation of 1919 events: [1;31m0.0194 sec[0m       
+--- Fisher                   : Creating weight file in xml format: [0;36mweights/TMVAClassification_Fisher.weights.xml[0m
+--- Fisher                   : Creating standalone response class: [0;36mweights/TMVAClassification_Fisher.class.C[0m
+--- Factory                  : Training finished
+--- Factory                  : Train method: MLP for Classification
+--- MLP                      : 
+--- MLP                      : [1m================================================================[0m
+--- MLP                      : [1mH e l p   f o r   M V A   m e t h o d   [ MLP ] :[0m
+--- MLP                      : 
+--- MLP                      : [1m--- Short description:[0m
+--- MLP                      : 
+--- MLP                      : The MLP artificial neural network (ANN) is a traditional feed-
+--- MLP                      : forward multilayer perceptron impementation. The MLP has a user-
+--- MLP                      : defined hidden layer architecture, while the number of input (output)
+--- MLP                      : nodes is determined by the input variables (output classes, i.e., 
+--- MLP                      : signal and one background). 
+--- MLP                      : 
+--- MLP                      : [1m--- Performance optimisation:[0m
+--- MLP                      : 
+--- MLP                      : Neural networks are stable and performing for a large variety of 
+--- MLP                      : linear and non-linear classification problems. However, in contrast
+--- MLP                      : to (e.g.) boosted decision trees, the user is advised to reduce the 
+--- MLP                      : number of input variables that have only little discrimination power. 
+--- MLP                      : 
+--- MLP                      : In the tests we have carried out so far, the MLP and ROOT networks
+--- MLP                      : (TMlpANN, interfaced via TMVA) performed equally well, with however
+--- MLP                      : a clear speed advantage for the MLP. The Clermont-Ferrand neural 
+--- MLP                      : net (CFMlpANN) exhibited worse classification performance in these
+--- MLP                      : tests, which is partly due to the slow convergence of its training
+--- MLP                      : (at least 10k training cycles are required to achieve approximately
+--- MLP                      : competitive results).
+--- MLP                      : 
+--- MLP                      : [1mOvertraining: [0monly the TMlpANN performs an explicit separation of the
+--- MLP                      : full training sample into independent training and validation samples.
+--- MLP                      : We have found that in most high-energy physics applications the 
+--- MLP                      : avaliable degrees of freedom (training events) are sufficient to 
+--- MLP                      : constrain the weights of the relatively simple architectures required
+--- MLP                      : to achieve good performance. Hence no overtraining should occur, and 
+--- MLP                      : the use of validation samples would only reduce the available training
+--- MLP                      : information. However, if the perrormance on the training sample is 
+--- MLP                      : found to be significantly better than the one found with the inde-
+--- MLP                      : pendent test sample, caution is needed. The results for these samples 
+--- MLP                      : are printed to standard output at the end of each training job.
+--- MLP                      : 
+--- MLP                      : [1m--- Performance tuning via configuration options:[0m
+--- MLP                      : 
+--- MLP                      : The hidden layer architecture for all ANNs is defined by the option
+--- MLP                      : "HiddenLayers=N+1,N,...", where here the first hidden layer has N+1
+--- MLP                      : neurons and the second N neurons (and so on), and where N is the number  
+--- MLP                      : of input variables. Excessive numbers of hidden layers should be avoided,
+--- MLP                      : in favour of more neurons in the first hidden layer.
+--- MLP                      : 
+--- MLP                      : The number of cycles should be above 500. As said, if the number of
+--- MLP                      : adjustable weights is small compared to the training sample size,
+--- MLP                      : using a large number of training samples should not lead to overtraining.
+--- MLP                      : 
+--- MLP                      : <Suppress this message by specifying "!H" in the booking option>
+--- MLP                      : [1m================================================================[0m
+--- MLP                      : 
+--- Norm                     : Preparing the transformation.
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            :             tau1_pT:             -0.68345              0.29584   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :            tau1_eta:            0.0048538              0.40693   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :             tau2_pT:             -0.80799              0.23010   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :            tau2_eta:           -0.0026582              0.42831   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :            tauTau_m:             -0.65579              0.21923   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :               MET_E:             -0.77463              0.22051   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :             MET_phi:            0.0079430              0.59062   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            : tauTau_MET_mT2_lsp0:             -0.67391              0.37924   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :    tauTau_MET_Dzeta:             -0.23710              0.21130   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :       tauTau_jet_HT:             -0.59944              0.27144   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :      tauTau_jet_MHT:             -0.70990              0.21229   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :           nonBjet_n:             -0.55858              0.31135   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :                 b_n:             -0.71016              0.35161   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :               b1_pT:             -0.80763              0.19580   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :              b1_eta:            -0.020186              0.42005   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :    tau1_b1_deltaPhi:            0.0064886              0.52559   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- MLP                      : Begin training
+--- MLP                      : Training Network
+--- MLP                      : End of training                                              
+--- MLP                      : Elapsed time for training with 1919 events: [1;31m16.6 sec[0m         
+--- MLP                      : Create MVA output for classification on training sample
+--- MLP                      : Evaluation of MLP on training sample (1919 events)
+--- MLP                      : Elapsed time for evaluation of 1919 events: [1;31m0.0281 sec[0m       
+--- MLP                      : Creating weight file in xml format: [0;36mweights/TMVAClassification_MLP.weights.xml[0m
+--- MLP                      : Creating standalone response class: [0;36mweights/TMVAClassification_MLP.class.C[0m
+--- MLP                      : Write special histos to file: TMVA.root:/Method_MLP/MLP
+--- Factory                  : Training finished
+--- Factory                  : Train method: BDTG for Classification
+--- BDTG                     : Begin training
+--- BDTG                     :  found and suggest the following possible pre-selection cuts 
+--- BDTG                     : as option DoPreselection was not used, these cuts however will not be performed, but the training will see the full sample
+--- BDTG                     :  found cut: Sig if var 7 > 140.385
+--- BDTG                     :  found cut: Sig if var 8 < -288.729
+--- BDTG                     :  found cut: Bkg if var 9 < 215.475
+--- BDTG                     :  found cut: Sig if var 13 > 363.13
+--- BDTG                     : <InitEventSample> For classification trees, 
+--- BDTG                     :  the effective number of backgrounds is scaled to match 
+--- BDTG                     :  the signal. Othersise the first boosting step would do 'just that'!
+--- BDTG                     : re-normlise events such that Sig and Bkg have respective sum of weights = 1
+--- BDTG                     :   sig->sig*1.14226ev. bkg->bkg*1.14226ev.
+--- BDTG                     : #events: (reweighted) sig: 959.5 bkg: 959.5
+--- BDTG                     : #events: (unweighted) sig: 840 bkg: 1079
+--- BDTG                     : Training 1000 Decision Trees ... patience please
+--- BinaryTree               : The minimal node size MinNodeSize=2.5 fMinNodeSize=2.5% is translated to an actual number of events = 24.65 for the training sample size of 986
+--- BinaryTree               : Note: This number will be taken as absolute minimum in the node, 
+--- BinaryTree               :       in terms of 'weighted events' and unweighted ones !! 
+--- BDTG                     : <Train> elapsed time: [1;31m1.68 sec[0m                              
+--- BDTG                     : <Train> average number of nodes (w/o pruning) : 6
+--- BDTG                     : End of training                                              
+--- BDTG                     : Elapsed time for training with 1919 events: [1;31m1.69 sec[0m         
+--- BDTG                     : Create MVA output for classification on training sample
+--- BDTG                     : Evaluation of BDTG on training sample (1919 events)
+--- BDTG                     : Elapsed time for evaluation of 1919 events: [1;31m0.207 sec[0m       
+--- BDTG                     : Creating weight file in xml format: [0;36mweights/TMVAClassification_BDTG.weights.xml[0m
+--- BDTG                     : Creating standalone response class: [0;36mweights/TMVAClassification_BDTG.class.C[0m
+--- BDTG                     : Write monitoring histograms to file: TMVA.root:/Method_BDT/BDTG
+--- Factory                  : Training finished
+--- Factory                  : Train method: BDT for Classification
+--- BDT                      : Begin training
+--- BDT                      :  found and suggest the following possible pre-selection cuts 
+--- BDT                      : as option DoPreselection was not used, these cuts however will not be performed, but the training will see the full sample
+--- BDT                      :  found cut: Sig if var 7 > 140.385
+--- BDT                      :  found cut: Sig if var 8 < -288.729
+--- BDT                      :  found cut: Bkg if var 9 < 215.475
+--- BDT                      :  found cut: Sig if var 13 > 363.13
+--- BDT                      : <InitEventSample> For classification trees, 
+--- BDT                      :  the effective number of backgrounds is scaled to match 
+--- BDT                      :  the signal. Othersise the first boosting step would do 'just that'!
+--- BDT                      : re-normlise events such that Sig and Bkg have respective sum of weights = 1
+--- BDT                      :   sig->sig*1.14226ev. bkg->bkg*1.14226ev.
+--- BDT                      : #events: (reweighted) sig: 959.5 bkg: 959.5
+--- BDT                      : #events: (unweighted) sig: 840 bkg: 1079
+--- BDT                      : Training 850 Decision Trees ... patience please
+--- BinaryTree               : The minimal node size MinNodeSize=2.5 fMinNodeSize=2.5% is translated to an actual number of events = 24.65 for the training sample size of 986
+--- BinaryTree               : Note: This number will be taken as absolute minimum in the node, 
+--- BinaryTree               :       in terms of 'weighted events' and unweighted ones !! 
+--- BDT                      : <Train> elapsed time: [1;31m1.37 sec[0m                              
+--- BDT                      : <Train> average number of nodes (w/o pruning) : 9
+--- BDT                      : End of training                                              
+--- BDT                      : Elapsed time for training with 1919 events: [1;31m1.38 sec[0m         
+--- BDT                      : Create MVA output for classification on training sample
+--- BDT                      : Evaluation of BDT on training sample (1919 events)
+--- BDT                      : Elapsed time for evaluation of 1919 events: [1;31m0.243 sec[0m       
+--- BDT                      : Creating weight file in xml format: [0;36mweights/TMVAClassification_BDT.weights.xml[0m
+--- BDT                      : Creating standalone response class: [0;36mweights/TMVAClassification_BDT.class.C[0m
+--- BDT                      : Write monitoring histograms to file: TMVA.root:/Method_BDT/BDT
+--- Factory                  : Training finished
+--- Factory                  : 
+--- Factory                  : Ranking input variables (method specific)...
+--- Fisher                   : Ranking result (top variable is best ranked)
+--- Fisher                   : ----------------------------------------------
+--- Fisher                   : Rank : Variable            : Discr. power
+--- Fisher                   : ----------------------------------------------
+--- Fisher                   :    1 : tauTau_jet_HT       : 1.929e-01
+--- Fisher                   :    2 : MET_E               : 1.417e-01
+--- Fisher                   :    3 : tauTau_jet_MHT      : 1.392e-01
+--- Fisher                   :    4 : b1_pT               : 1.112e-01
+--- Fisher                   :    5 : tau1_pT             : 1.057e-01
+--- Fisher                   :    6 : tau2_pT             : 7.228e-02
+--- Fisher                   :    7 : tauTau_MET_mT2_lsp0 : 6.538e-02
+--- Fisher                   :    8 : tauTau_m            : 4.000e-02
+--- Fisher                   :    9 : tauTau_MET_Dzeta    : 1.475e-02
+--- Fisher                   :   10 : nonBjet_n           : 8.528e-03
+--- Fisher                   :   11 : b_n                 : 7.428e-03
+--- Fisher                   :   12 : b1_eta              : 4.085e-04
+--- Fisher                   :   13 : MET_phi             : 6.382e-05
+--- Fisher                   :   14 : tau1_eta            : 1.980e-05
+--- Fisher                   :   15 : tau2_eta            : 3.539e-06
+--- Fisher                   :   16 : tau1_b1_deltaPhi    : 5.117e-07
+--- Fisher                   : ----------------------------------------------
+--- MLP                      : Ranking result (top variable is best ranked)
+--- MLP                      : --------------------------------------------
+--- MLP                      : Rank : Variable            : Importance
+--- MLP                      : --------------------------------------------
+--- MLP                      :    1 : b1_pT               : 3.321e+01
+--- MLP                      :    2 : tau2_pT             : 2.863e+01
+--- MLP                      :    3 : tau1_pT             : 2.702e+01
+--- MLP                      :    4 : MET_E               : 1.990e+01
+--- MLP                      :    5 : tauTau_jet_MHT      : 1.676e+01
+--- MLP                      :    6 : tauTau_MET_mT2_lsp0 : 1.627e+01
+--- MLP                      :    7 : tauTau_m            : 1.416e+01
+--- MLP                      :    8 : b1_eta              : 1.317e+01
+--- MLP                      :    9 : b_n                 : 1.297e+01
+--- MLP                      :   10 : tauTau_jet_HT       : 1.202e+01
+--- MLP                      :   11 : nonBjet_n           : 1.145e+01
+--- MLP                      :   12 : tau1_b1_deltaPhi    : 9.315e+00
+--- MLP                      :   13 : MET_phi             : 7.916e+00
+--- MLP                      :   14 : tau2_eta            : 6.147e+00
+--- MLP                      :   15 : tau1_eta            : 4.451e+00
+--- MLP                      :   16 : tauTau_MET_Dzeta    : 3.346e+00
+--- MLP                      : --------------------------------------------
+--- BDTG                     : Ranking result (top variable is best ranked)
+--- BDTG                     : -----------------------------------------------------
+--- BDTG                     : Rank : Variable            : Variable Importance
+--- BDTG                     : -----------------------------------------------------
+--- BDTG                     :    1 : tau1_eta            : 8.904e-02
+--- BDTG                     :    2 : tau1_b1_deltaPhi    : 8.826e-02
+--- BDTG                     :    3 : b1_eta              : 7.996e-02
+--- BDTG                     :    4 : MET_phi             : 7.549e-02
+--- BDTG                     :    5 : tau2_eta            : 6.607e-02
+--- BDTG                     :    6 : tauTau_jet_HT       : 6.384e-02
+--- BDTG                     :    7 : tauTau_MET_Dzeta    : 6.300e-02
+--- BDTG                     :    8 : tauTau_MET_mT2_lsp0 : 5.801e-02
+--- BDTG                     :    9 : tau1_pT             : 5.783e-02
+--- BDTG                     :   10 : b1_pT               : 5.652e-02
+--- BDTG                     :   11 : nonBjet_n           : 5.552e-02
+--- BDTG                     :   12 : tauTau_jet_MHT      : 5.542e-02
+--- BDTG                     :   13 : MET_E               : 5.468e-02
+--- BDTG                     :   14 : tau2_pT             : 5.392e-02
+--- BDTG                     :   15 : tauTau_m            : 5.307e-02
+--- BDTG                     :   16 : b_n                 : 2.936e-02
+--- BDTG                     : -----------------------------------------------------
+--- BDT                      : Ranking result (top variable is best ranked)
+--- BDT                      : -----------------------------------------------------
+--- BDT                      : Rank : Variable            : Variable Importance
+--- BDT                      : -----------------------------------------------------
+--- BDT                      :    1 : tauTau_jet_HT       : 7.882e-02
+--- BDT                      :    2 : b1_pT               : 7.675e-02
+--- BDT                      :    3 : b1_eta              : 7.112e-02
+--- BDT                      :    4 : tau1_b1_deltaPhi    : 7.088e-02
+--- BDT                      :    5 : tau1_eta            : 6.954e-02
+--- BDT                      :    6 : MET_phi             : 6.817e-02
+--- BDT                      :    7 : tau2_eta            : 6.722e-02
+--- BDT                      :    8 : tau1_pT             : 6.586e-02
+--- BDT                      :    9 : tauTau_MET_Dzeta    : 6.427e-02
+--- BDT                      :   10 : MET_E               : 6.002e-02
+--- BDT                      :   11 : tauTau_MET_mT2_lsp0 : 5.988e-02
+--- BDT                      :   12 : tau2_pT             : 5.940e-02
+--- BDT                      :   13 : tauTau_jet_MHT      : 5.934e-02
+--- BDT                      :   14 : tauTau_m            : 5.350e-02
+--- BDT                      :   15 : nonBjet_n           : 4.575e-02
+--- BDT                      :   16 : b_n                 : 2.948e-02
+--- BDT                      : -----------------------------------------------------
+--- Factory                  : 
+--- Factory                  : === Destroy and recreate all methods via weight files for testing ===
+--- Factory                  : 
+--- MethodBase               : Reading weight file: [0;36mweights/TMVAClassification_Fisher.weights.xml[0m
+--- Fisher                   : Read method "Fisher" of type "Fisher"
+--- Fisher                   : MVA method was trained with TMVA Version: 4.2.1
+--- Fisher                   : MVA method was trained with ROOT Version: 6.06/06
+--- MethodBase               : Reading weight file: [0;36mweights/TMVAClassification_MLP.weights.xml[0m
+--- MLP                      : Read method "MLP" of type "MLP"
+--- MLP                      : MVA method was trained with TMVA Version: 4.2.1
+--- MLP                      : MVA method was trained with ROOT Version: 6.06/06
+--- MLP                      : Building Network
+--- MLP                      : Initializing weights
+--- MethodBase               : Reading weight file: [0;36mweights/TMVAClassification_BDTG.weights.xml[0m
+--- BDTG                     : Read method "BDTG" of type "BDT"
+--- BDTG                     : MVA method was trained with TMVA Version: 4.2.1
+--- BDTG                     : MVA method was trained with ROOT Version: 6.06/06
+--- MethodBase               : Reading weight file: [0;36mweights/TMVAClassification_BDT.weights.xml[0m
+--- BDT                      : Read method "BDT" of type "BDT"
+--- BDT                      : MVA method was trained with TMVA Version: 4.2.1
+--- BDT                      : MVA method was trained with ROOT Version: 6.06/06
+--- Factory                  : Test all methods...
+--- Factory                  : Test method: Fisher for Classification performance
+--- Fisher                   : Evaluation of Fisher on testing sample (1919 events)
+--- Fisher                   : Elapsed time for evaluation of 1919 events: [1;31m0.0184 sec[0m       
+--- Fisher                   : Evaluation of Fisher on testing sample
+--- Fisher                   : Elapsed time for evaluation of 1919 events: [1;31m0.0154 sec[0m       
+--- Factory                  : Test method: MLP for Classification performance
+--- MLP                      : Evaluation of MLP on testing sample (1919 events)
+--- MLP                      : Elapsed time for evaluation of 1919 events: [1;31m0.0285 sec[0m       
+--- Factory                  : Test method: BDTG for Classification performance
+--- BDTG                     : Evaluation of BDTG on testing sample (1919 events)
+--- BDTG                     : Elapsed time for evaluation of 1919 events: [1;31m0.161 sec[0m       
+--- Factory                  : Test method: BDT for Classification performance
+--- BDT                      : Evaluation of BDT on testing sample (1919 events)
+--- BDT                      : Elapsed time for evaluation of 1919 events: [1;31m0.169 sec[0m       
+--- Factory                  : Evaluate all methods...
+--- Factory                  : Evaluate classifier: Fisher
+--- Fisher                   : Loop over test events and fill histograms with classifier response...
+--- Fisher                   : Also filling probability and rarity histograms (on request)...
+--- Factory                  : Write evaluation histograms to file
+--- TFHandler_Fisher         : Plot event variables for Fisher
+--- TFHandler_Fisher         : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Fisher         :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_Fisher         : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Fisher         :             tau1_pT:               98.856               57.189   [               40.693               840.98 ]
+--- TFHandler_Fisher         :            tau1_eta:             0.045848              0.86316   [              -2.0689               2.0980 ]
+--- TFHandler_Fisher         :             tau2_pT:               59.265               24.296   [               40.032               396.72 ]
+--- TFHandler_Fisher         :            tau2_eta:             0.016170              0.92788   [              -2.0645               2.0821 ]
+--- TFHandler_Fisher         :            tauTau_m:               152.57               76.057   [               24.353               824.48 ]
+--- TFHandler_Fisher         :               MET_E:               137.60               94.428   [               50.010               986.44 ]
+--- TFHandler_Fisher         :             MET_phi:             0.028571               1.8184   [              -3.1406               3.1380 ]
+--- TFHandler_Fisher         : tauTau_MET_mT2_lsp0:               33.230               37.842   [              0.16953               230.81 ]
+--- TFHandler_Fisher         :    tauTau_MET_Dzeta:              -40.359               109.09   [              -597.30               819.04 ]
+--- TFHandler_Fisher         :       tauTau_jet_HT:               487.57               280.30   [               127.32               2793.2 ]
+--- TFHandler_Fisher         :      tauTau_jet_MHT:               128.00               97.243   [               2.4642               1007.8 ]
+--- TFHandler_Fisher         :           nonBjet_n:               2.1021               1.5087   [               0.0000               9.0000 ]
+--- TFHandler_Fisher         :                 b_n:               1.4099              0.53864   [               1.0000               4.0000 ]
+--- TFHandler_Fisher         :               b1_pT:               94.362               75.818   [               20.044               714.33 ]
+--- TFHandler_Fisher         :              b1_eta:             0.031497              0.99727   [              -2.3893               2.3823 ]
+--- TFHandler_Fisher         :    tau1_b1_deltaPhi:             0.018989               1.6921   [              -3.1370               3.1317 ]
+--- TFHandler_Fisher         : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_Fisher         : Create scatter and profile plots in target-file directory: 
+--- TFHandler_Fisher         : TMVA.root:/Method_Fisher/Fisher/CorrelationPlots
+--- Factory                  : Evaluate classifier: MLP
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            :             tau1_pT:             -0.73848              0.25768   [              -1.0005               2.6054 ]
+--- TFHandler_MLP            :            tau1_eta:             0.025659              0.41258   [             -0.98515               1.0066 ]
+--- TFHandler_MLP            :             tau2_pT:             -0.84320              0.19781   [             -0.99980               1.9043 ]
+--- TFHandler_MLP            :            tau2_eta:            0.0011022              0.44537   [             -0.99756              0.99270 ]
+--- TFHandler_MLP            :            tauTau_m:             -0.67916              0.19111   [              -1.0013               1.0091 ]
+--- TFHandler_MLP            :               MET_E:             -0.81387              0.20078   [              -1.0001              0.99096 ]
+--- TFHandler_MLP            :             MET_phi:            0.0092355              0.57928   [              -1.0003              0.99977 ]
+--- TFHandler_MLP            : tauTau_MET_mT2_lsp0:             -0.72330              0.31670   [             -0.99998              0.93025 ]
+--- TFHandler_MLP            :    tauTau_MET_Dzeta:             -0.22392              0.18088   [              -1.1473               1.2010 ]
+--- TFHandler_MLP            :       tauTau_jet_HT:             -0.66885              0.24620   [             -0.98528               1.3563 ]
+--- TFHandler_MLP            :      tauTau_jet_MHT:             -0.75311              0.19203   [              -1.0010              0.98432 ]
+--- TFHandler_MLP            :           nonBjet_n:             -0.57959              0.30175   [              -1.0000              0.80000 ]
+--- TFHandler_MLP            :                 b_n:             -0.72674              0.35910   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :               b1_pT:             -0.84575              0.15736   [             -0.99999              0.44097 ]
+--- TFHandler_MLP            :              b1_eta:             0.013694              0.41769   [              -1.0002              0.99829 ]
+--- TFHandler_MLP            :    tau1_b1_deltaPhi:            0.0049945              0.53924   [              -1.0008              0.99699 ]
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- MLP                      : Loop over test events and fill histograms with classifier response...
+--- Factory                  : Write evaluation histograms to file
+--- TFHandler_MLP            : Plot event variables for MLP
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            :             tau1_pT:             -0.73848              0.25768   [              -1.0005               2.6054 ]
+--- TFHandler_MLP            :            tau1_eta:             0.025659              0.41258   [             -0.98515               1.0066 ]
+--- TFHandler_MLP            :             tau2_pT:             -0.84320              0.19781   [             -0.99980               1.9043 ]
+--- TFHandler_MLP            :            tau2_eta:            0.0011022              0.44537   [             -0.99756              0.99270 ]
+--- TFHandler_MLP            :            tauTau_m:             -0.67916              0.19111   [              -1.0013               1.0091 ]
+--- TFHandler_MLP            :               MET_E:             -0.81387              0.20078   [              -1.0001              0.99096 ]
+--- TFHandler_MLP            :             MET_phi:            0.0092355              0.57928   [              -1.0003              0.99977 ]
+--- TFHandler_MLP            : tauTau_MET_mT2_lsp0:             -0.72330              0.31670   [             -0.99998              0.93025 ]
+--- TFHandler_MLP            :    tauTau_MET_Dzeta:             -0.22392              0.18088   [              -1.1473               1.2010 ]
+--- TFHandler_MLP            :       tauTau_jet_HT:             -0.66885              0.24620   [             -0.98528               1.3563 ]
+--- TFHandler_MLP            :      tauTau_jet_MHT:             -0.75311              0.19203   [              -1.0010              0.98432 ]
+--- TFHandler_MLP            :           nonBjet_n:             -0.57959              0.30175   [              -1.0000              0.80000 ]
+--- TFHandler_MLP            :                 b_n:             -0.72674              0.35910   [              -1.0000               1.0000 ]
+--- TFHandler_MLP            :               b1_pT:             -0.84575              0.15736   [             -0.99999              0.44097 ]
+--- TFHandler_MLP            :              b1_eta:             0.013694              0.41769   [              -1.0002              0.99829 ]
+--- TFHandler_MLP            :    tau1_b1_deltaPhi:            0.0049945              0.53924   [              -1.0008              0.99699 ]
+--- TFHandler_MLP            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_MLP            : Create scatter and profile plots in target-file directory: 
+--- TFHandler_MLP            : TMVA.root:/Method_MLP/MLP/CorrelationPlots
+--- Factory                  : Evaluate classifier: BDTG
+--- BDTG                     : Loop over test events and fill histograms with classifier response...
+--- Factory                  : Write evaluation histograms to file
+--- TFHandler_BDTG           : Plot event variables for BDTG
+--- TFHandler_BDTG           : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_BDTG           :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_BDTG           : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_BDTG           :             tau1_pT:               98.856               57.189   [               40.693               840.98 ]
+--- TFHandler_BDTG           :            tau1_eta:             0.045848              0.86316   [              -2.0689               2.0980 ]
+--- TFHandler_BDTG           :             tau2_pT:               59.265               24.296   [               40.032               396.72 ]
+--- TFHandler_BDTG           :            tau2_eta:             0.016170              0.92788   [              -2.0645               2.0821 ]
+--- TFHandler_BDTG           :            tauTau_m:               152.57               76.057   [               24.353               824.48 ]
+--- TFHandler_BDTG           :               MET_E:               137.60               94.428   [               50.010               986.44 ]
+--- TFHandler_BDTG           :             MET_phi:             0.028571               1.8184   [              -3.1406               3.1380 ]
+--- TFHandler_BDTG           : tauTau_MET_mT2_lsp0:               33.230               37.842   [              0.16953               230.81 ]
+--- TFHandler_BDTG           :    tauTau_MET_Dzeta:              -40.359               109.09   [              -597.30               819.04 ]
+--- TFHandler_BDTG           :       tauTau_jet_HT:               487.57               280.30   [               127.32               2793.2 ]
+--- TFHandler_BDTG           :      tauTau_jet_MHT:               128.00               97.243   [               2.4642               1007.8 ]
+--- TFHandler_BDTG           :           nonBjet_n:               2.1021               1.5087   [               0.0000               9.0000 ]
+--- TFHandler_BDTG           :                 b_n:               1.4099              0.53864   [               1.0000               4.0000 ]
+--- TFHandler_BDTG           :               b1_pT:               94.362               75.818   [               20.044               714.33 ]
+--- TFHandler_BDTG           :              b1_eta:             0.031497              0.99727   [              -2.3893               2.3823 ]
+--- TFHandler_BDTG           :    tau1_b1_deltaPhi:             0.018989               1.6921   [              -3.1370               3.1317 ]
+--- TFHandler_BDTG           : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_BDTG           : Create scatter and profile plots in target-file directory: 
+--- TFHandler_BDTG           : TMVA.root:/Method_BDT/BDTG/CorrelationPlots
+--- Factory                  : Evaluate classifier: BDT
+--- BDT                      : Loop over test events and fill histograms with classifier response...
+--- Factory                  : Write evaluation histograms to file
+--- TFHandler_BDT            : Plot event variables for BDT
+--- TFHandler_BDT            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_BDT            :            Variable                   Mean                   RMS           [        Min                   Max ]
+--- TFHandler_BDT            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_BDT            :             tau1_pT:               98.856               57.189   [               40.693               840.98 ]
+--- TFHandler_BDT            :            tau1_eta:             0.045848              0.86316   [              -2.0689               2.0980 ]
+--- TFHandler_BDT            :             tau2_pT:               59.265               24.296   [               40.032               396.72 ]
+--- TFHandler_BDT            :            tau2_eta:             0.016170              0.92788   [              -2.0645               2.0821 ]
+--- TFHandler_BDT            :            tauTau_m:               152.57               76.057   [               24.353               824.48 ]
+--- TFHandler_BDT            :               MET_E:               137.60               94.428   [               50.010               986.44 ]
+--- TFHandler_BDT            :             MET_phi:             0.028571               1.8184   [              -3.1406               3.1380 ]
+--- TFHandler_BDT            : tauTau_MET_mT2_lsp0:               33.230               37.842   [              0.16953               230.81 ]
+--- TFHandler_BDT            :    tauTau_MET_Dzeta:              -40.359               109.09   [              -597.30               819.04 ]
+--- TFHandler_BDT            :       tauTau_jet_HT:               487.57               280.30   [               127.32               2793.2 ]
+--- TFHandler_BDT            :      tauTau_jet_MHT:               128.00               97.243   [               2.4642               1007.8 ]
+--- TFHandler_BDT            :           nonBjet_n:               2.1021               1.5087   [               0.0000               9.0000 ]
+--- TFHandler_BDT            :                 b_n:               1.4099              0.53864   [               1.0000               4.0000 ]
+--- TFHandler_BDT            :               b1_pT:               94.362               75.818   [               20.044               714.33 ]
+--- TFHandler_BDT            :              b1_eta:             0.031497              0.99727   [              -2.3893               2.3823 ]
+--- TFHandler_BDT            :    tau1_b1_deltaPhi:             0.018989               1.6921   [              -3.1370               3.1317 ]
+--- TFHandler_BDT            : ------------------------------------------------------------------------------------------------------------------
+--- TFHandler_BDT            : Create scatter and profile plots in target-file directory: 
+--- TFHandler_BDT            : TMVA.root:/Method_BDT/BDT/CorrelationPlots
+--- Factory                  : 
+--- Factory                  : Inter-MVA correlation matrix (signal):
+--- Factory                  : ----------------------------------------
+--- Factory                  :           Fisher     MLP    BDTG     BDT
+--- Factory                  :  Fisher:  +1.000  +0.544  +0.542  +0.787
+--- Factory                  :     MLP:  +0.544  +1.000  +0.677  +0.681
+--- Factory                  :    BDTG:  +0.542  +0.677  +1.000  +0.787
+--- Factory                  :     BDT:  +0.787  +0.681  +0.787  +1.000
+--- Factory                  : ----------------------------------------
+--- Factory                  : 
+--- Factory                  : Inter-MVA correlation matrix (background):
+--- Factory                  : ----------------------------------------
+--- Factory                  :           Fisher     MLP    BDTG     BDT
+--- Factory                  :  Fisher:  +1.000  +0.742  +0.721  +0.895
+--- Factory                  :     MLP:  +0.742  +1.000  +0.760  +0.750
+--- Factory                  :    BDTG:  +0.721  +0.760  +1.000  +0.813
+--- Factory                  :     BDT:  +0.895  +0.750  +0.813  +1.000
+--- Factory                  : ----------------------------------------
+--- Factory                  : 
+--- Factory                  : Correlations between input variables and MVA response (signal):
+--- Factory                  : ----------------------------------------
+--- Factory                  :                       Fisher     MLP    BDTG     BDT
+--- Factory                  :             tau1_pT:  +0.525  +0.246  +0.241  +0.390
+--- Factory                  :            tau1_eta:  -0.001  +0.067  -0.007  +0.037
+--- Factory                  :             tau2_pT:  +0.429  +0.185  +0.164  +0.264
+--- Factory                  :            tau2_eta:  -0.009  -0.043  -0.029  -0.032
+--- Factory                  :            tauTau_m:  +0.345  +0.099  +0.108  +0.196
+--- Factory                  :               MET_E:  +0.543  +0.315  +0.316  +0.381
+--- Factory                  :             MET_phi:  -0.025  +0.078  +0.037  +0.037
+--- Factory                  : tauTau_MET_mT2_lsp0:  +0.401  +0.267  +0.295  +0.518
+--- Factory                  :    tauTau_MET_Dzeta:  -0.236  -0.134  -0.171  -0.358
+--- Factory                  :       tauTau_jet_HT:  +0.691  +0.340  +0.321  +0.450
+--- Factory                  :      tauTau_jet_MHT:  +0.566  +0.311  +0.301  +0.393
+--- Factory                  :           nonBjet_n:  +0.147  +0.051  +0.047  +0.081
+--- Factory                  :                 b_n:  +0.039  +0.056  -0.008  -0.015
+--- Factory                  :               b1_pT:  +0.426  +0.224  +0.257  +0.335
+--- Factory                  :              b1_eta:  -0.037  +0.055  +0.006  +0.024
+--- Factory                  :    tau1_b1_deltaPhi:  +0.061  +0.008  +0.062  +0.047
+--- Factory                  : ----------------------------------------
+--- Factory                  : 
+--- Factory                  : Correlations between input variables and MVA response (background):
+--- Factory                  : ----------------------------------------
+--- Factory                  :                       Fisher     MLP    BDTG     BDT
+--- Factory                  :             tau1_pT:  +0.549  +0.443  +0.397  +0.512
+--- Factory                  :            tau1_eta:  -0.034  -0.025  -0.028  -0.031
+--- Factory                  :             tau2_pT:  +0.428  +0.275  +0.295  +0.388
+--- Factory                  :            tau2_eta:  -0.028  -0.037  +0.010  -0.014
+--- Factory                  :            tauTau_m:  +0.227  +0.189  +0.211  +0.265
+--- Factory                  :               MET_E:  +0.570  +0.434  +0.440  +0.547
+--- Factory                  :             MET_phi:  -0.031  -0.040  -0.024  -0.010
+--- Factory                  : tauTau_MET_mT2_lsp0:  +0.256  +0.054  +0.133  +0.131
+--- Factory                  :    tauTau_MET_Dzeta:  -0.130  +0.018  -0.028  -0.013
+--- Factory                  :       tauTau_jet_HT:  +0.711  +0.605  +0.562  +0.691
+--- Factory                  :      tauTau_jet_MHT:  +0.601  +0.457  +0.454  +0.572
+--- Factory                  :           nonBjet_n:  +0.174  +0.126  +0.146  +0.175
+--- Factory                  :                 b_n:  +0.238  +0.148  +0.066  +0.115
+--- Factory                  :               b1_pT:  +0.514  +0.468  +0.490  +0.569
+--- Factory                  :              b1_eta:  -0.075  -0.063  -0.007  -0.040
+--- Factory                  :    tau1_b1_deltaPhi:  +0.062  +0.027  +0.024  +0.070
+--- Factory                  : ----------------------------------------
+--- Factory                  : 
+--- Factory                  : The following "overlap" matrices contain the fraction of events for which 
+--- Factory                  : the MVAs 'i' and 'j' have returned conform answers about "signal-likeness"
+--- Factory                  : An event is signal-like, if its MVA output exceeds the following value:
+--- Factory                  : --------------------
+--- Factory                  :  Method:  Cut value:
+--- Factory                  : --------------------
+--- Factory                  :  Fisher:     -0.155
+--- Factory                  :     MLP:     +0.464
+--- Factory                  :    BDTG:     -0.086
+--- Factory                  :     BDT:     -0.025
+--- Factory                  : --------------------
+--- Factory                  : which correspond to the working point: eff(signal) = 1 - eff(background)
+--- Factory                  : 
+--- Factory                  : Inter-MVA overlap matrix (signal):
+--- Factory                  : ----------------------------------------
+--- Factory                  :           Fisher     MLP    BDTG     BDT
+--- Factory                  :  Fisher:  +1.000  +0.888  +0.902  +0.937
+--- Factory                  :     MLP:  +0.888  +1.000  +0.895  +0.908
+--- Factory                  :    BDTG:  +0.902  +0.895  +1.000  +0.937
+--- Factory                  :     BDT:  +0.937  +0.908  +0.937  +1.000
+--- Factory                  : ----------------------------------------
+--- Factory                  : 
+--- Factory                  : Inter-MVA overlap matrix (background):
+--- Factory                  : ----------------------------------------
+--- Factory                  :           Fisher     MLP    BDTG     BDT
+--- Factory                  :  Fisher:  +1.000  +0.916  +0.922  +0.953
+--- Factory                  :     MLP:  +0.916  +1.000  +0.919  +0.920
+--- Factory                  :    BDTG:  +0.922  +0.919  +1.000  +0.949
+--- Factory                  :     BDT:  +0.953  +0.920  +0.949  +1.000
+--- Factory                  : ----------------------------------------
+--- Factory                  : 
+--- Factory                  : Evaluation results ranked by best signal efficiency and purity (area)
+--- Factory                  : --------------------------------------------------------------------------------
+--- Factory                  : MVA              Signal efficiency at bkg eff.(error):       | Sepa-    Signifi- 
+--- Factory                  : Method:          @B=0.01    @B=0.10    @B=0.30    ROC-integ. | ration:  cance:   
+--- Factory                  : --------------------------------------------------------------------------------
+--- Factory                  : BDT            : 0.509(7110)  0.855(5008)  0.973(2305)    0.952    | 0.661    1.806
+--- Factory                  : BDTG           : 0.473(7101)  0.830(5342)  0.968(2503)    0.948    | 0.660    1.850
+--- Factory                  : Fisher         : 0.404(6979)  0.818(5488)  0.965(2613)    0.941    | 0.619    1.389
+--- Factory                  : MLP            : 0.424(7029)  0.815(5522)  0.968(2503)    0.941    | 0.635    1.743
+--- Factory                  : --------------------------------------------------------------------------------
+--- Factory                  : 
+--- Factory                  : Testing efficiency compared to training efficiency (overtraining check)
+--- Factory                  : --------------------------------------------------------------------------------
+--- Factory                  : MVA              Signal efficiency: from test sample (from training sample) 
+--- Factory                  : Method:          @B=0.01             @B=0.10            @B=0.30   
+--- Factory                  : --------------------------------------------------------------------------------
+--- Factory                  : BDT            : 0.509 (0.739)       0.855 (0.919)      0.973 (0.976)
+--- Factory                  : BDTG           : 0.473 (0.867)       0.830 (0.932)      0.968 (0.972)
+--- Factory                  : Fisher         : 0.404 (0.433)       0.818 (0.857)      0.965 (0.963)
+--- Factory                  : MLP            : 0.424 (0.723)       0.815 (0.888)      0.968 (0.970)
+--- Factory                  : --------------------------------------------------------------------------------
+--- Factory                  : 
+--- Dataset:Default          : Created tree 'TestTree' with 1919 events
+--- Dataset:Default          : Created tree 'TrainTree' with 1919 events
+--- Factory                  :   
+--- Factory                  : [1mThank you for using TMVA![0m
+--- Factory                  : [1mFor citation information, please visit: http://tmva.sf.net/citeTMVA.html[0m
+==> Wrote root file: TMVA.root
+==> TMVAClassification is done!
+--- Launch TMVA GUI to view input file: TMVA.root
+=== Note: inactive buttons indicate classifiers that were not trained, ===
+===       or functionalities that were not invoked during the training ===
+(int) Error in ValuePrinter: missing output string.
+--- Opening root file TMVA.root in read mode
+--- Found directory for method: Fisher::Fisher containing MVA_Fisher_S/_B
+--- Mean and RMS (S): 0.544534, 0.710282
+--- Mean and RMS (B): -0.575276, 0.381158
+--- Found comparison histograms for overtraining check
+--- Perform Kolmogorov-Smirnov tests
+--- Goodness of signal (background) consistency: 0.002 (0.341)
++++ Could not open image:  /opt/root-6.06.06/tutorials/tmva/tmva_logo.gif
++++ Could not open image tmva_logo.gif
+--- Found directory for method: MLP::MLP containing MVA_MLP_S/_B
+--- Mean and RMS (S): 0.831118, 0.283471
+--- Mean and RMS (B): 0.147905, 0.270851
+--- Found comparison histograms for overtraining check
+--- Perform Kolmogorov-Smirnov tests
+--- Goodness of signal (background) consistency: 0 (0)
++++ Could not open image:  /opt/root-6.06.06/tutorials/tmva/tmva_logo.gif
++++ Could not open image tmva_logo.gif
+--- Found directory for method: BDT::BDTG containing MVA_BDTG_S/_B
+--- Mean and RMS (S): 0.677599, 0.551013
+--- Mean and RMS (B): -0.729291, 0.524348
+--- Found comparison histograms for overtraining check
+--- Perform Kolmogorov-Smirnov tests
+--- Goodness of signal (background) consistency: 0 (0)
++++ Could not open image:  /opt/root-6.06.06/tutorials/tmva/tmva_logo.gif
++++ Could not open image tmva_logo.gif
+--- Found directory for method: BDT::BDT containing MVA_BDT_S/_B
+--- Mean and RMS (S): 0.203505, 0.179664
+--- Mean and RMS (B): -0.246884, 0.172898
+--- Found comparison histograms for overtraining check
+--- Perform Kolmogorov-Smirnov tests
+--- Goodness of signal (background) consistency: 0 (0)
++++ Could not open image:  /opt/root-6.06.06/tutorials/tmva/tmva_logo.gif
++++ Could not open image tmva_logo.gif

@@ -1,0 +1,34 @@
+# LowSumMT_NJEQ0 Datacard
+        imax 1  number of channels
+        jmax 5  number of backgrounds
+        kmax *  number of nuisance parameters (sources of systematical uncertainties)
+        ------------
+        bin LowSumMT_NJEQ0
+        observation 30.000
+        ------------
+        bin                       LowSumMT_NJEQ0               LowSumMT_NJEQ0              LowSumMT_NJEQ0               LowSumMT_NJEQ0              LowSumMT_NJEQ0             LowSumMT_NJEQ0     
+        process                 signal           fakepos         fakeneg             dy               top              rare
+        process                   0                  1                2                 3                4               5
+        rate                   SIG_YIELDS          39.649          16.070           4.277          1.723           2.397  
+        ------------
+        sigstatLowSumMT_NJEQ0lowMT2 lnN        SIG_STAT         -               -               -               -  		- 
+        fakeposstatLowSumMT_NJEQ0lowMT2  lnN        -         1.070               -               -               -           -
+        fakenegstatLowSumMT_NJEQ0lowMT2  lnN        -             -                1.062               -               -               - 
+        dystatLowSumMT_NJEQ0lowMT2  gmN 5    -               -           -           0.855                 -               - 
+        topstatLowSumMT_NJEQ0lowMT2  lnN       -             -         -               -               1.161              - 
+        rarestatLowSumMT_NJEQ0lowMT2  lnN        -         -                -                     -               -                 1.296 
+        isolowMT2          lnN       SIG_ISO         -              -            1.100             1.100           1.100 
+        isoptlowMT2          lnN       SIG_ISOPT         -               -            1.000/1.000             1.000/1.000           1.000/1.001 
+        jeslowMT2          lnN       SIG_JES         -              -             1.106             1.030           1.102 
+        jerlowMT2          lnN       SIG_JER         -              -             1.077             1.061           1.028 
+        teslowMT2          lnN       SIG_TES         -              -             1.011             1.012           1.106 
+        metlowMT2          lnN       SIG_MET         -              -             1.167             1.027           1.054 
+        btaglowMT2          lnN       SIG_BTAG         -            -               1.000             1.000           1.000 
+        lumilowMT2          lnN       SIG_LUMI         -            -               1.023             1.023           1.023 
+        pulowMT2          lnN       SIG_PU         -             -              1.035             1.067           1.018 
+        fakesystlowMT2    lnN           -        1.249             -           -			-		- 
+        dyxsecandscale   lnN             -           -           -                 1.15                -               - 
+        rarexsecandscale   lnN             -           -               -            -               1.15              - 
+        topxsecandscale   lnN             -           -                -                -         -                  1.15 
+        betaposLowSumMT_NJEQ0     rateParam LowSumMT_NJEQ0 fakepos  1 [.99,1.01] 
+        betanegLowSumMT_NJEQ0     rateParam LowSumMT_NJEQ0 fakeneg  -1 [-1.01,-.99] 

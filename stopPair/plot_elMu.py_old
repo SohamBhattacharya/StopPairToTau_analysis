@@ -1,0 +1,607 @@
+import numpy
+import os
+import sys
+
+import ROOT
+from ROOT import TAxis
+from ROOT import TCanvas
+from ROOT import TFile
+from ROOT import TH1F
+from ROOT import TH2F
+from ROOT import THStack
+from ROOT import TLegend
+from ROOT import TStyle
+
+import Common
+import Details
+
+
+initVal = -9999
+
+numberFormat_int = ".0f"
+numberFormat_float = ".3f"
+
+
+ROOT.gStyle.SetOptStat(0)
+ROOT.gStyle.SetPaintTextFormat(numberFormat_float)
+ROOT.gStyle.SetTitleH(0.035)
+ROOT.gStyle.SetTitleY(0.985)
+
+era = "2017"
+
+outDir = "plots/elMu/%s" %(era)
+os.system("mkdir -p %s" %(outDir))
+
+histSuffix = "OS_baselineTTCRB"
+
+suffix = "_elMu_analysis"
+
+rootFileName = "custom_all_analyzed.root"
+
+l_inputFile_data = Common.getRootFiles(Details.cutFlowDir_elMu_data[era], suffix, rootFileName)
+
+l_inputFile_WJetsToLNu = Common.getRootFiles(Details.cutFlowDir_WJetsToLNu[era], suffix, rootFileName)
+l_inputFile_DYJetsToLL = Common.getRootFiles(Details.cutFlowDir_DYJetsToLL[era], suffix, rootFileName)
+l_inputFile_VH = Common.getRootFiles(Details.cutFlowDir_VH[era], suffix, rootFileName)
+l_inputFile_VV = Common.getRootFiles(Details.cutFlowDir_VV[era], suffix, rootFileName)
+l_inputFile_WG = Common.getRootFiles(Details.cutFlowDir_WG[era], suffix, rootFileName)
+l_inputFile_ttbar = Common.getRootFiles(Details.cutFlowDir_ttbar[era], suffix, rootFileName)
+l_inputFile_singleTop = Common.getRootFiles(Details.cutFlowDir_singleTop[era], suffix, rootFileName)
+
+
+luminosity_data = Common.luminosity_data[era]
+
+
+class HistogramDetails :
+    
+    rootFileName = ""
+    rootFile = 0
+    
+    histName = ""
+    histTitle = ""
+    histLabel = ""
+    
+    lineStyle = 1
+    lineWidth = 2
+    
+    color = 4
+    
+    hist = 0
+    
+    xTitle = ""
+    yTitle = ""
+    
+    xMin = initVal
+    xMax = initVal
+    
+    yMin = initVal
+    yMax = initVal
+    
+    zMin = initVal
+    zMax = initVal
+    
+    logX = False
+    logY = False
+    logZ = False
+    
+    gridX = False
+    gridY = False
+    
+    nDivisionsX = [0, 0, 0]
+    nDivisionsY = [0, 0, 0]
+    
+    centerLabelsX = False
+    centerLabelsY = False
+    
+    drawOption = "hist"
+    
+    outFileName = ""
+    outFileName_suffix = ""
+    
+    
+    def __init__(self, hist) :
+        
+        self.hist = hist
+        
+    
+    #def getHist(self, projection = "", startBin = 0, endBin = -1, findStartBin = False, findEndBin = False, suffix = "") :
+    #    
+    #    print "File:", self.rootFileName
+    #    print "Name:", self.histName
+    #    
+    #    self.rootFile = TFile(self.rootFileName)
+    #    
+    #    axis = 0
+    #    
+    #    if (projection == "X") :
+    #        
+    #        hist_temp = self.rootFile.Get(self.histName).Clone()
+    #        axis = hist_temp.GetYaxis()
+    #    
+    #    elif (projection == "Y") :
+    #        
+    #        hist_temp = self.rootFile.Get(self.histName).Clone()
+    #        axis = hist_temp.GetXaxis()
+    #    
+    #    if (projection != "" and findStartBin) :
+    #        
+    #        startBin = axis.FindBin(startBin)
+    #    
+    #    if (projection != "" and findEndBin) :
+    #        
+    #        endBin = axis.FindBin(endBin)
+    #    
+    #    # Get histogram
+    #    if (projection == "") :
+    #        
+    #        self.hist = self.rootFile.Get(self.histName).Clone()
+    #        self.hist.Sumw2()
+    #    
+    #    elif (projection == "X") :
+    #        
+    #        print "Projection X"
+    #        self.hist = self.rootFile.Get(self.histName).Clone().ProjectionX(self.histName + "_px" + suffix, startBin, endBin)
+    #        self.hist.Sumw2()
+    #    
+    #    elif (projection == "Y") :
+    #        
+    #        print "Projection Y"
+    #        self.hist = self.rootFile.Get(self.histName).Clone().ProjectionY(self.histName + "_py" + suffix, startBin, endBin)
+    #        self.hist.Sumw2()
+    #    
+    #    else :
+    #        
+    #        print "Wrong projection option to HistogramDetails.getHist(...)"
+    #        exit(1)
+    #
+    #
+    #def normalize(self, byBinWidth = False) :
+    #    
+    #    integral = self.hist.Integral()
+    #    
+    #    self.hist.Scale(1.0 / integral)
+    #    
+    #    if (byBinWidth) :
+    #        
+    #        for iBin in range(0, self.hist.GetNbinsX()) :
+    #            
+    #            binWidth = self.hist.GetXaxis().GetBinWidth(iBin+1)
+    #            binContent = self.hist.GetBinContent(iBin+1)
+    #            binError = self.hist.GetBinError(iBin+1)
+    #            
+    #            #print binWidth, binContent
+    #            
+    #            scale = 1.0 / binWidth
+    #            
+    #            self.hist.SetBinContent(iBin+1, binContent*scale)
+    #            self.hist.SetBinError(iBin+1, binError*scale)
+
+
+def getHistogram(
+    histName,
+    histSuffix = "",
+    isMC = False,
+    l_rootFile = [],
+    l_crossSection = [],
+    l_nEvent = [],
+    luminosity = 1.0
+    ) :
+    
+    if (histSuffix != "") :
+        
+        histName = "%s_%s" %(histName, histSuffix)
+    
+    print "Getting histogram %s" %(histName)
+    
+    hist = l_rootFile[0].Get(histName).Clone()
+    hist.Sumw2()
+    
+    for iFile in range(0, len(l_rootFile)) :
+        
+        print "Input file: %s" %(l_rootFile[iFile].GetName())
+        
+        temp = l_rootFile[iFile].Get(histName).Clone()
+        
+        f = 1.0
+        
+        if (isMC) :
+            
+            f = l_crossSection[iFile] / float(l_nEvent[iFile])
+        
+        if (iFile == 0) :
+            
+            hist.Scale(f)
+        
+        else :
+            
+            hist.Add(temp, f)
+    
+    hist.Scale(luminosity);
+    
+    print "Got histogram %s (Integral = %f)" %(histName, hist.Integral())
+    print ""
+    
+    return hist
+
+
+##################################################
+def getHistogramDetail_data(histName, histSuffix) :
+    
+    l_histDetail = []
+    
+    histDetail = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = False,
+        l_rootFile = l_inputFile_data,
+    ))
+    
+    histDetail.histLabel = "Data"
+    histDetail.color = 1
+    
+    l_histDetail.append(histDetail)
+    
+    return l_histDetail
+
+
+##################################################
+def getHistogramDetail_mc(histName, histSuffix) :
+    
+    l_histDetail = []
+    
+    histDetail_WJetsToLNu = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = True,
+        l_rootFile = l_inputFile_WJetsToLNu,
+        l_crossSection = Details.crossSection_WJetsToLNu,
+        l_nEvent = Details.nEvent_WJetsToLNu,
+        luminosity = luminosity_data,
+    ))
+    
+    histDetail_WJetsToLNu.histLabel = Details.label_WJetsToLNu[0]
+    histDetail_WJetsToLNu.color = Details.color_WJetsToLNu
+    
+    l_histDetail.append(histDetail_WJetsToLNu)
+    
+    
+    ##################################################
+    histDetail_DYJetsToLL = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = True,
+        l_rootFile = l_inputFile_DYJetsToLL,
+        l_crossSection = Details.crossSection_DYJetsToLL,
+        l_nEvent = Details.nEvent_DYJetsToLL,
+        luminosity = luminosity_data,
+    ))
+    
+    histDetail_DYJetsToLL.histLabel = Details.label_DYJetsToLL[0]
+    histDetail_DYJetsToLL.color = Details.color_DYJetsToLL
+    
+    l_histDetail.append(histDetail_DYJetsToLL)
+    
+    
+    ##################################################
+    histDetail_VH = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = True,
+        l_rootFile = l_inputFile_VH,
+        l_crossSection = Details.crossSection_VH,
+        l_nEvent = Details.nEvent_VH,
+        luminosity = luminosity_data,
+    ))
+    
+    histDetail_VH.histLabel = Details.label_VH[0]
+    histDetail_VH.color = Details.color_VH
+    
+    l_histDetail.append(histDetail_VH)
+    
+    
+    ##################################################
+    histDetail_VV = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = True,
+        l_rootFile = l_inputFile_VV,
+        l_crossSection = Details.crossSection_VV,
+        l_nEvent = Details.nEvent_VV,
+        luminosity = luminosity_data,
+    ))
+    
+    histDetail_VV.histLabel = Details.label_VV[0]
+    histDetail_VV.color = Details.color_VV
+    
+    l_histDetail.append(histDetail_VV)
+    
+    
+    ##################################################
+    #histDetail_QCD = HistogramDetails(getHistogram_QCD(
+    #    histName = histName,
+    #    histSuffix_sig = "tightTight_OS_baselineSRB",
+    #    histSuffix_shape = "looseLoose_OS_baselineSRB",
+    #    histSuffix_scaleNum = "tightTight_SS_baselineSRB",
+    #    histSuffix_scaleDen = "looseLoose_SS_baselineSRB",
+    #    l_rootFile_data = l_inputFile_data,
+    #    luminosity = luminosity_QCDestimation,
+    #    
+    #    ll_rootFile_mc = [
+    #        l_inputFile_WJetsToLNu,
+    #        l_inputFile_DYJetsToLL,
+    #        l_inputFile_VH,
+    #        l_inputFile_VV,
+    #        l_inputFile_WG,
+    #        l_inputFile_ttbar,
+    #        l_inputFile_singleTop,
+    #    ],
+    #    
+    #    ll_crossSection_mc = [
+    #        Details.crossSection_WJetsToLNu,
+    #        Details.crossSection_DYJetsToLL,
+    #        Details.crossSection_VH,
+    #        Details.crossSection_VV,
+    #        Details.crossSection_WG,
+    #        Details.crossSection_ttbar,
+    #        Details.crossSection_singleTop,
+    #    ],
+    #    
+    #    ll_nEvent_mc = [
+    #        Details.nEvent_WJetsToLNu,
+    #        Details.nEvent_DYJetsToLL,
+    #        Details.nEvent_VH,
+    #        Details.nEvent_VV,
+    #        Details.nEvent_WG,
+    #        Details.nEvent_ttbar,
+    #        Details.nEvent_singleTop,
+    #    ],
+    #))
+    #
+    #histDetail_QCD.histLabel = Details.label_QCD[0]
+    #histDetail_QCD.color = Details.color_QCD
+    #
+    #l_histDetail.append(histDetail_QCD)
+    
+    
+    ##################################################
+    histDetail_ttbar = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = True,
+        l_rootFile = l_inputFile_ttbar,
+        l_crossSection = Details.crossSection_ttbar,
+        l_nEvent = Details.nEvent_ttbar,
+        luminosity = luminosity_data,
+    ))
+    
+    histDetail_ttbar.histLabel = Details.label_ttbar[0]
+    histDetail_ttbar.color = Details.color_ttbar
+    
+    l_histDetail.append(histDetail_ttbar)
+    
+    
+    ##################################################
+    histDetail_singleTop = HistogramDetails(getHistogram(
+        histName = histName,
+        histSuffix = histSuffix,
+        isMC = True,
+        l_rootFile = l_inputFile_singleTop,
+        l_crossSection = Details.crossSection_singleTop,
+        l_nEvent = Details.nEvent_singleTop,
+        luminosity = luminosity_data,
+    ))
+    
+    histDetail_singleTop.histLabel = Details.label_singleTop[0]
+    histDetail_singleTop.color = Details.color_singleTop
+    
+    l_histDetail.append(histDetail_singleTop)
+    
+    
+    return l_histDetail
+
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "MET_E_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "|#slash{E}_{T}|",
+    xTitle = "|#slash{E}_{T}| [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 800,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "MET_phi_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "#slash{E}_{T} #phi",
+    xTitle = "#slash{E}_{T} #phi", yTitle = "# event",
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    legendPos = "LR",
+    gridY = True,
+    outFileName = outFile,
+)
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "elMu_MET_mT2_lsp0_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "m^{#mu#mu}_{T2}",
+    xTitle = "m_{T2} [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 200,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "elMu_jet_HT"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "H^{#mu#mu-jet}_{T}",
+    xTitle = "H_{T} [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 1000,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "jet_HT_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "H^{jet}_{T}",
+    xTitle = "H_{T} [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 1000,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "elMu_el_pT_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "p_{T} of #mu_{1}",
+    xTitle = "p^{#mu_{1}}_{T} [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 1000,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)
+
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "elMu_mu_pT_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "p_{T} of #mu_{2}",
+    xTitle = "p^{#mu_{2}}_{T} [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 500,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)
+
+##################################################
+histDir = "reco/%s" %(histSuffix)
+histName = "b1_pT_reco"
+histNameFull = "%s/%s" %(histDir, histName)
+outFile = "%s/%s" %(outDir, histName)
+
+l_histDetail_data = getHistogramDetail_data(histNameFull, histSuffix)
+l_histDetail_mc = getHistogramDetail_mc(histNameFull, histSuffix)
+
+Common.plot1D(
+    l_histDetail_data = l_histDetail_data,
+    l_histDetail_mc = l_histDetail_mc,
+    stackDrawOption = "",
+    ratioPlot = True,
+    title = "p_{T} of b_{1}",
+    xTitle = "p^{b_{1}}_{T} [GeV]", yTitle = "# event",
+    xMin = 0,
+    xMax = 1000,
+    yMin = 1,
+    logY = True,
+    gridX = True,
+    gridY = True,
+    outFileName = outFile,
+)

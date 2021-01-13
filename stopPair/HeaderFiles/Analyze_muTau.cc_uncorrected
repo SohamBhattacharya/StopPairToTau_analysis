@@ -1,0 +1,408 @@
+# include <iostream>
+# include <fstream>
+# include <string>
+# include <vector>
+
+# include <CLHEP/Vector/LorentzVector.h>
+
+# include <TFile.h>
+# include <TH1F.h>
+# include <TTable.h>
+# include <TTree.h>
+# include <TVector.h>
+
+# include "lester_mt2_bisect_mod.h"
+
+# include "Common.h"
+# include "CustomInfo_mc.h"
+# include "Output_RECO.h"
+# include "Analyze_muTau.h"
+
+
+namespace Analyze_muTau
+{
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY)
+    {
+        Analyze_muTau::initialize(process, dir, \
+            isMC, \
+            isSUSY, \
+            std::make_pair(-1, -1), \
+            {}
+        );
+    }
+    
+    
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY, \
+        std::pair <int, int> massPoint_stop1_neutralino1)
+    {
+        Analyze_muTau::initialize(process, dir, \
+            isMC, \
+            isSUSY, \
+            massPoint_stop1_neutralino1, \
+            {}
+        );
+    }
+    
+    
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY, \
+        std::vector <double> v_eventWeight_nJetBin)
+    {
+        Analyze_muTau::initialize(process, dir, \
+            isMC, \
+            isSUSY, \
+            std::make_pair(-1, -1), \
+            v_eventWeight_nJetBin
+        );
+    }
+    
+    
+    void initialize(const char *process, const char *dir, \
+        bool isMC, \
+        bool isSUSY, \
+        std::pair <int, int> massPoint_stop1_neutralino1, \
+        std::vector <double> v_eventWeight_nJetBin)
+    {
+        asymm_mt2_lester_bisect::disableCopyrightMessage();
+        
+        char sourceFileName[Common::str_len];
+        sprintf(sourceFileName, "../sourceFiles/%s/%s_custom.txt", process, process);
+        
+        std::ifstream sourceFileList;
+        sourceFileList.open(sourceFileName);
+        
+        std::string inFile;
+        
+        char command[Common::str_len];
+        
+        char outDir[Common::str_len];
+        sprintf(outDir, "output_analyzed/%s", dir);
+        
+        sprintf(command, "mkdir -p %s", outDir);
+        system(command);
+        
+        
+        char treePath_gen[Common::str_len];
+        char treePath_reco[Common::str_len];
+        
+        sprintf(treePath_gen, "miniaodsim2custom/gen");
+        
+        if(isMC)
+        {
+            sprintf(treePath_reco, "miniaodsim2custom/reco");
+        }
+        else
+        {
+            sprintf(treePath_reco, "miniaod2custom/reco");
+        }
+        
+        char fileName_pileUp_mc[Common::str_len];
+        sprintf(fileName_pileUp_mc, "output_pileUp/%s/custom_all_pileUp.root", process);
+        char histName_pileUp_mc[Common::str_len];
+        sprintf(histName_pileUp_mc, "pileup");
+        
+        char fileName_pileUp_data[Common::str_len];
+        sprintf(fileName_pileUp_data, "../tauTau_data/output_pileUp/Tau/pileUpDistribution_2016H.root");
+        char histName_pileUp_data[Common::str_len];
+        sprintf(histName_pileUp_data, "pileup");
+        
+        int n = 0;
+        while(std::getline(sourceFileList, inFile))
+        {
+            //n++; if(n > 1) break;
+            char fileNameStripped[Common::str_len];
+            sprintf(fileNameStripped, "%s", (inFile.substr(inFile.rfind("/")+1, inFile.rfind(".root")-inFile.rfind("/")-1)).c_str());
+            
+            char outFile[Common::str_len];
+            sprintf(outFile, "%s/%s_analyzed.root", outDir, fileNameStripped);
+            
+            printf("Analyzing... \n");
+            printf("Input: %s \n", inFile.c_str());
+            printf("Output: %s \n", outFile);
+            printf("\n");
+            
+            // Input root file
+            std::vector <const char*> v_object_mc_gen = { \
+                "genParam", "el", "mu", "tau_vis", "b", "jet", "MET"};
+            
+            std::vector <const char*> v_object_reco;
+            
+            if(isMC)
+            {
+                v_object_reco = { \
+                    "PU", "el", "mu", "tau", "jet", "MET"};
+            }
+            
+            else
+            {
+                v_object_reco = { \
+                    "el", "mu", "tau", "jet", "MET"};
+            }
+            
+            
+            CustomInfo_mc::Info *input_mc;
+            CustomInfo_data::Info *input_data;
+            
+            if(isMC)
+            {
+                input_mc = new CustomInfo_mc::Info( \
+                    inFile.c_str(), \
+                    treePath_gen, v_object_mc_gen, \
+                    treePath_reco, v_object_reco, \
+                    "read", \
+                    fileName_pileUp_mc, histName_pileUp_mc, \
+                    fileName_pileUp_data, histName_pileUp_data);
+            }
+            
+            else
+            {
+                input_data = new CustomInfo_data::Info( \
+                    inFile.c_str(), \
+                    treePath_reco, v_object_reco, \
+                    "read");
+            }
+            
+            // RECO histograms
+            std::vector <const char*> v_outputOption_reco;
+            
+            if(isMC)
+            {
+                v_outputOption_reco = { \
+                    "PU", "el", "mu", "tau", "muTau", "jet", "b", "MET"};
+            }
+            
+            else
+            {
+                v_outputOption_reco = { \
+                    "el", "mu", "tau", "muTau", "jet", "b", "MET"};
+            }
+            
+            Output_RECO::Output *output_reco_looseMediumIso_SS = new Output_RECO::Output(v_outputOption_reco, "looseMediumIso_SS");
+            Output_RECO::Output *output_reco_looseMediumIso_OS = new Output_RECO::Output(v_outputOption_reco, "looseMediumIso_OS");
+            
+            Output_RECO::Output *output_reco_tightTightIso_SS = new Output_RECO::Output(v_outputOption_reco, "tightTightIso_SS");
+            Output_RECO::Output *output_reco_tightTightIso_OS = new Output_RECO::Output(v_outputOption_reco, "tightTightIso_OS");
+            
+            
+            /*output_reco_looseMediumIso_SS->addCutFlow(8, "cutFlow1");
+            
+            output_reco_looseMediumIso_OS->addCutFlow(8, "cutFlow1");
+            
+            output_reco_tightTightIso_SS->addCutFlow(8, "cutFlow1");
+            
+            output_reco_tightTightIso_OS->addCutFlow(8, "cutFlow1");*/
+            
+            for(int iSR = 0; iSR < 6; iSR++)
+            {
+                char tempStr[Common::str_len];
+                sprintf(tempStr, "SR%d", iSR+1);
+                
+                output_reco_looseMediumIso_SS->addCutFlow(5, "SR"+std::to_string(iSR+1));
+                output_reco_looseMediumIso_OS->addCutFlow(5, "SR"+std::to_string(iSR+1));
+                output_reco_tightTightIso_SS->addCutFlow(5, "SR"+std::to_string(iSR+1));
+                output_reco_tightTightIso_OS->addCutFlow(5, "SR"+std::to_string(iSR+1));
+            }
+            
+            
+            // Output root file
+            TFile *output_analyzed;
+            output_analyzed = TFile::Open(outFile, "RECREATE");
+            
+            
+            std::map <std::string, bool> m_eventSelection;
+            
+            m_eventSelection["tau_n >= 2"] = false;
+            
+            // Analyze
+            if(isMC)
+            {
+                // RECO
+                //m_eventSelection["tau_n >= 2"] = true;
+                
+                Analyze_muTau::analyze_reco( \
+                    input_mc, \
+                    output_reco_looseMediumIso_SS, \
+                    "loose", "medium", "SS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+                
+                Analyze_muTau::analyze_reco( \
+                    input_mc, \
+                    output_reco_looseMediumIso_OS, \
+                    "loose", "medium", "OS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+                
+                Analyze_muTau::analyze_reco( \
+                    input_mc, \
+                    output_reco_tightTightIso_SS, \
+                    "tight", "tight", "SS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+                
+                Analyze_muTau::analyze_reco( \
+                    input_mc, \
+                    output_reco_tightTightIso_OS, \
+                    "tight", "tight", "OS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+            }
+            
+            else
+            {
+                // RECO
+                //m_eventSelection["tau_n >= 2"] = true;
+                
+                Analyze_muTau::analyze_reco( \
+                    input_data, \
+                    output_reco_looseMediumIso_SS, \
+                    "loose", "medium", "SS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+                
+                Analyze_muTau::analyze_reco( \
+                    input_data, \
+                    output_reco_looseMediumIso_OS, \
+                    "loose", "medium", "OS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+                
+                Analyze_muTau::analyze_reco( \
+                    input_data, \
+                    output_reco_tightTightIso_SS, \
+                    "tight", "tight", "SS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+                
+                Analyze_muTau::analyze_reco( \
+                    input_data, \
+                    output_reco_tightTightIso_OS, \
+                    "tight", "tight", "OS", \
+                    m_eventSelection, \
+                    isMC, isSUSY, \
+                    massPoint_stop1_neutralino1, \
+                    v_eventWeight_nJetBin);
+            }
+            
+            printf("\n\n");
+            
+            output_analyzed->mkdir("reco");
+            output_analyzed->cd("reco");
+            
+            //output_reco_noTauPairSelection->writeData();
+            
+            output_reco_looseMediumIso_SS->writeData();
+            output_reco_looseMediumIso_OS->writeData();
+            output_reco_tightTightIso_SS->writeData();
+            output_reco_tightTightIso_OS->writeData();
+            
+            
+            // Write cut-flows
+            char cutFlow_outDir[Common::str_len];
+            char cutFlow_outFile[Common::str_len];
+            
+            // looseMediumIso_SS
+            /*sprintf(cutFlow_outDir, "%s/cutFlow_cutFlow1_looseMediumIso_SS", outDir);
+            sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+            system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+            output_reco_looseMediumIso_SS->writeCutFlow("cutFlow1", cutFlow_outFile);
+            
+            
+            // looseMediumIso_OS
+            sprintf(cutFlow_outDir, "%s/cutFlow_cutFlow1_looseMediumIso_OS", outDir);
+            sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+            system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+            output_reco_looseMediumIso_OS->writeCutFlow("cutFlow1", cutFlow_outFile);
+            
+            
+            // tightTightIso_SS
+            sprintf(cutFlow_outDir, "%s/cutFlow_cutFlow1_tightTightIso_SS", outDir);
+            sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+            system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+            output_reco_tightTightIso_SS->writeCutFlow("cutFlow1", cutFlow_outFile);
+            
+            
+            // tightTightIso_OS
+            sprintf(cutFlow_outDir, "%s/cutFlow_cutFlow1_tightTightIso_OS", outDir);
+            sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+            system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+            output_reco_tightTightIso_OS->writeCutFlow("cutFlow1", cutFlow_outFile);*/
+            
+            
+            for(int iSR = 0; iSR < 6; iSR++)
+            {
+                std::string tempStr = "SR"+std::to_string(iSR+1);
+                
+                sprintf(cutFlow_outDir, "%s/cutFlow_SR%d_looseMediumIso_SS", outDir, iSR+1);
+                sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+                system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+                output_reco_looseMediumIso_SS->writeCutFlow(tempStr, cutFlow_outFile);
+                
+                
+                sprintf(cutFlow_outDir, "%s/cutFlow_SR%d_looseMediumIso_OS", outDir, iSR+1);
+                sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+                system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+                output_reco_looseMediumIso_OS->writeCutFlow(tempStr, cutFlow_outFile);
+                
+                
+                sprintf(cutFlow_outDir, "%s/cutFlow_SR%d_tightTightIso_SS", outDir, iSR+1);
+                sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+                system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+                output_reco_tightTightIso_SS->writeCutFlow(tempStr, cutFlow_outFile);
+                
+                
+                sprintf(cutFlow_outDir, "%s/cutFlow_SR%d_tightTightIso_OS", outDir, iSR+1);
+                sprintf(cutFlow_outFile, "%s/%s_cutFlow.txt", cutFlow_outDir, fileNameStripped);
+                system(("mkdir -p " + std::string(cutFlow_outDir)).c_str());
+                output_reco_tightTightIso_OS->writeCutFlow(tempStr, cutFlow_outFile);
+            }
+            
+            
+            // Release memory
+            output_reco_looseMediumIso_SS->freeMemory();
+            output_reco_looseMediumIso_OS->freeMemory();
+            
+            output_reco_tightTightIso_SS->freeMemory();
+            output_reco_tightTightIso_OS->freeMemory();
+            
+            delete output_reco_looseMediumIso_SS;
+            delete output_reco_looseMediumIso_OS;
+            
+            delete output_reco_tightTightIso_SS;
+            delete output_reco_tightTightIso_OS;
+            
+            delete output_analyzed;
+            
+            if(isMC)
+            {
+                input_mc->freeMemory();
+                delete input_mc;
+            }
+            
+            else
+            {
+                input_data->freeMemory();
+                delete input_data;
+            }
+        }
+    }
+}
