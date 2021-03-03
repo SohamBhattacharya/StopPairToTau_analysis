@@ -19,6 +19,8 @@ import numpy
 
 import Details
 
+ROOT.gROOT.SetBatch(1)
+
 
 noPrelim = False
 #noPrelim = True
@@ -29,8 +31,8 @@ noPrelimStr = "_noPrelim"*(noPrelim)
 withSig = False
 
 
-#l_era = ["2016"]
-l_era = ["2017"]
+l_era = ["2016"]
+#l_era = ["2017"]
 #l_era = ["2016", "2017"]
 
 eraStr = "+".join(l_era)
@@ -210,7 +212,7 @@ os.system("mkdir -p %s" %(plotDir))
 
 debug = False
 
-histStyle_data = "E"
+histStyle_data = "PE1"
 histStyle_mc = "hist"
 histStyle_sig = "hist"
 
@@ -272,26 +274,26 @@ colors_mc = [
 
 # [[name, isCorreleted], ...]
 l_systStr_commonMC = [
-    ["tauES", False],
-    ["pileupReweight", False],
-    ["tauIDisoSF", False],
-    ["bTaggingSF", False],
-    ["JEC", True],
-    ["JER", False],
-    ["unclusteredEnergy", False],
-    ["scale", True],
+    #["tauES", False],
+    #["pileupReweight", False],
+    #["tauIDisoSF", False],
+    #["bTaggingSF", False],
+    #["JEC", True],
+    #["JER", False],
+    #["unclusteredEnergy", False],
+    #["scale", True],
     ["normalization", True],
 ]
 
 
 l_systStr_ttbar_toInclude = [
-    ["tauES", False],
-    ["tauIDisoSF", False],
+    #["tauES", False],
+    #["tauIDisoSF", False],
 ]
 
 
 d_syst_DY = [
-    ["ZpTreweight", False],
+    #["ZpTreweight", False],
 ]
 
 
@@ -304,8 +306,8 @@ l_systStr_fake = [
 # In %
 d_systStr_flat = {
     "normalization": {
-        "up": 15.0,
-        "down": 15.0,
+        "up": 0.0,
+        "down": 0.0,
     },
 }
 
@@ -646,7 +648,7 @@ plotQuantity_temp.xMin = 0
 plotQuantity_temp.xMax = l_invMassBin[-1]
 plotQuantity_temp.yMin = yMin
 plotQuantity_temp.logY = True
-plotQuantity_temp.legendPos = "LR"
+plotQuantity_temp.legendPos = "UR"
 l_plotQuantity.append(plotQuantity_temp)
 
 
@@ -678,29 +680,29 @@ plotQuantity_temp.legendPos = "LL"
 l_plotQuantity.append(plotQuantity_temp)
 
 
-plotQuantity_temp = PlotQuantity()
-plotQuantity_temp.name = "b_n_medium_reco"
-plotQuantity_temp.xtitle = "n_{b}"
-plotQuantity_temp.ytitle = "Events"
-plotQuantity_temp.xMin = 0
-plotQuantity_temp.xMax = 7
-plotQuantity_temp.yMin = yMin
-#plotQuantity_temp.yMax = 1e5
-plotQuantity_temp.logY = True
-plotQuantity_temp.legendPos = "UR"
-l_plotQuantity.append(plotQuantity_temp)
-
-
-plotQuantity_temp = PlotQuantity()
-plotQuantity_temp.name = "b1_pT_reco"
-plotQuantity_temp.xtitle = "b_{1} p_{T} [GeV]"
-plotQuantity_temp.ytitle = "Events / GeV"
-plotQuantity_temp.l_rebin = l_pTbin_b
-plotQuantity_temp.xMin = 0
-plotQuantity_temp.xMax = l_pTbin_b[-1]
-plotQuantity_temp.yMin = yMin
-plotQuantity_temp.logY = True
-l_plotQuantity.append(plotQuantity_temp)
+#plotQuantity_temp = PlotQuantity()
+#plotQuantity_temp.name = "b_n_medium_reco"
+#plotQuantity_temp.xtitle = "n_{b}"
+#plotQuantity_temp.ytitle = "Events"
+#plotQuantity_temp.xMin = 0
+#plotQuantity_temp.xMax = 7
+#plotQuantity_temp.yMin = yMin
+##plotQuantity_temp.yMax = 1e5
+#plotQuantity_temp.logY = True
+#plotQuantity_temp.legendPos = "UR"
+#l_plotQuantity.append(plotQuantity_temp)
+#
+#
+#plotQuantity_temp = PlotQuantity()
+#plotQuantity_temp.name = "b1_pT_reco"
+#plotQuantity_temp.xtitle = "b_{1} p_{T} [GeV]"
+#plotQuantity_temp.ytitle = "Events / GeV"
+#plotQuantity_temp.l_rebin = l_pTbin_b
+#plotQuantity_temp.xMin = 0
+#plotQuantity_temp.xMax = l_pTbin_b[-1]
+#plotQuantity_temp.yMin = yMin
+#plotQuantity_temp.logY = True
+#l_plotQuantity.append(plotQuantity_temp)
 
 
 #plotQuantity_temp = PlotQuantity()
@@ -719,19 +721,19 @@ l_plotQuantity.append(plotQuantity_temp)
 
 l_details = []
 
-#l_details.append({
-#    "Data": "tightTight_SS_baselineSRB_nbAny",
-#    "Fake": "SS_baselineSRB_nbAny",
-#    "MC": "tightTight_SS_genMatched_baselineSRB_nbAny",
-#    "Dir": "SS_baselineSRB_nbAny"
-#})
-
 l_details.append({
-    "Data": "tightTight_OS_baselineSRB_nb0",
-    "Fake": "OS_baselineSRB_nb0",
-    "MC": "tightTight_OS_genMatched_baselineSRB_nb0",
-    "Dir": "OS_baselineSRB_nb0",
+    "Data": "tightTight_SS_baselineSRB_nbAny",
+    "Fake": "SS_baselineSRB_nbAny",
+    "MC": "tightTight_SS_genMatched_baselineSRB_nbAny",
+    "Dir": "SS_baselineSRB_nbAny"
 })
+
+#l_details.append({
+#    "Data": "tightTight_OS_baselineSRB_nb0",
+#    "Fake": "OS_baselineSRB_nb0",
+#    "MC": "tightTight_OS_genMatched_baselineSRB_nb0",
+#    "Dir": "OS_baselineSRB_nb0",
+#})
 
 #l_details.append({
 #    "Data": "tightTight_OS_baselineSRB",
@@ -780,6 +782,7 @@ for iDetail in range(0, len(l_details)) :
             #h1_data.hist.Scale(1.0, "width")
             h1_data.histLabel = "Data"
             h1_data.color = 1
+            h1_data.lineWidth = 2
             h1_data.drawOption = histStyle_data
             
             print "\n"
@@ -856,7 +859,8 @@ for iDetail in range(0, len(l_details)) :
                 
                 print ""
                 
-                l_systStr_temp = []
+                #l_systStr_temp = []
+                l_systStr_temp = l_systStr_commonMC
                 
                 if ("ttbar" in d_inputFileDirs_mc[era][iMC][0]) :
                     

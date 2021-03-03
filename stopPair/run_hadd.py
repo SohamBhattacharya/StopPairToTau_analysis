@@ -137,14 +137,21 @@ outputDir_analyzed["2016"] = [
     ##"tauTau_data/output_analyzed/Tau_Run2016G-18Apr2017-v1_MINIAOD",
     ##"tauTau_data/output_analyzed/Tau_Run2016H-18Apr2017-v1_MINIAOD",
     
-    #"tauTau_data/output_analyzed/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016C-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016D-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016E-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016F-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016G-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016H-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016C-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016D-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016E-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016F-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016G-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016H-07Aug17-v1_MINIAOD",
     
+    "tauTau_data/output_analyzed/Tau_Run2016B-17Jul2018_ver2-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016C-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016D-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016E-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016F-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016G-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016H-17Jul2018-v1_MINIAOD",
     
     #"muTau_data/output_analyzed/SingleMuon",
     
@@ -152,12 +159,12 @@ outputDir_analyzed["2016"] = [
     #"stopPair_mc/output_analyzed/SMS-T8bbstausnu_XCha0p5_XStau0p5_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
     #"stopPair_mc/output_analyzed/SMS-T8bbstausnu_XCha0p5_XStau0p75_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
     
-    #"DYJetsToLL_mc/output_analyzed/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY1JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY2JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY3JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY4JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #
+    "DYJetsToLL_mc/output_analyzed/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY1JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY2JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY3JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY4JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    
     #"WJetsToLNu_mc/output_analyzed/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
     #"WJetsToLNu_mc/output_analyzed/W1JetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
     #"WJetsToLNu_mc/output_analyzed/W2JetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
@@ -332,13 +339,21 @@ outputDir_tauFakeEstimation["2016"] = [
     ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-18Apr2017-v1_MINIAOD",
     ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-18Apr2017-v1_MINIAOD",
     
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016C-07Aug17-v1_MINIAOD",
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016D-07Aug17-v1_MINIAOD",
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016E-07Aug17-v1_MINIAOD",
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016F-07Aug17-v1_MINIAOD",
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-07Aug17-v1_MINIAOD",
-    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016C-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016D-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016E-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016F-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-07Aug17-v1_MINIAOD",
+    
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016B-17Jul2018_ver2-v1_MINIAOD",
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016C-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016D-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016E-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016F-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-17Jul2018-v1_MINIAOD",
 ]
 
 outputDir_tauFakeEstimation["2017"] = [
@@ -612,7 +627,7 @@ def doNothing() :
 l_command = []
 l_process = []
 l_runProcess = []
-nWorkerMax = 20
+nWorkerMax = 3
 
 
 for iDir in range(0, len(outputDir)) :
@@ -648,8 +663,8 @@ for iDir in range(0, len(outputDir)) :
             print command
             os.system(command)
             
-            #haddCompressionStr = ""
-            haddCompressionStr = "-f0"
+            haddCompressionStr = ""
+            #haddCompressionStr = "-f0"
             
             #if ("data" in outputDir[iDir]) :
             #    
@@ -696,6 +711,8 @@ for iDir in range(0, len(outputDir)) :
                 
                 print "Submitting:", command
                 
+                l_command.append(command)
+                
                 l_runProcess.append(
                     subprocess.Popen(command, shell = True)
                 )
@@ -709,3 +726,21 @@ while (sum([(runProc.poll() == None) for runProc in l_runProcess])) :
     
     #time.sleep(30)
     doNothing()
+
+
+l_retCode = numpy.array([runProc.poll() for runProc in l_runProcess], dtype = int)
+
+print "\n\n"
+print "="*50
+print "Summary \n"
+
+for iCode, retCode in enumerate(l_retCode) :
+    
+    if (retCode) :
+        
+        print "Error (return value %d) in operation: \n%s" %(retCode, l_command(iCode))
+        print ""
+
+print "\n"
+print "Encountered error in %d/%d operations." %(sum(l_retCode != 0), len(l_retCode))
+

@@ -218,6 +218,7 @@ namespace FakeEstimation_tauTau
             // Select tau pair
             std::vector <double> v_tau_pTetaCut(input->tau_n_reco, 0);
             std::vector <double> v_tau_IPcut(input->tau_n_reco, 0);
+            std::vector <double> v_tau_isNewDM(input->tau_n_reco, 0);
             
             std::vector <double> v_tau_ES(input->tau_n_reco, 1.0);
             
@@ -278,6 +279,8 @@ namespace FakeEstimation_tauTau
                     v_tau2_antiIsolationCut.at(iTau) = 0;
                 }
                 
+                v_tau_isNewDM.at(iTau) = Common::isTauNewDM((int) input->v_tau_decayMode_reco->at(iTau));
+                
                 ////if(v_tau1_isolation->at(iTau) && v_tau2_isolation->at(iTau))
                 //{
                 //    printf("[%s] Event %d: tau %d: %d %d, %d %d \n",
@@ -301,10 +304,10 @@ namespace FakeEstimation_tauTau
             
             std::vector <std::vector <double> *> vv_tau1_selection = {
                 input->v_tau_isTriggerMatched_reco,
-                input->v_tau_byDecayModeFinding_reco,
+                &v_tau_isNewDM,
                 &v_tau_IPcut,
-                input->v_tau_againstElectronLooseMVA6_reco,
-                input->v_tau_againstMuonLoose3_reco,
+                input->v_tau_byLooseDeepTau2017v2p1VSe_reco,
+                input->v_tau_byTightDeepTau2017v2p1VSmu_reco,
                 v_tau1_isolation,
                 &v_tau1_antiIsolationCut,
                 &v_tau_pTetaCut
@@ -312,10 +315,10 @@ namespace FakeEstimation_tauTau
             
             std::vector <std::vector <double> *> vv_tau2_selection = {
                 input->v_tau_isTriggerMatched_reco,
-                input->v_tau_byDecayModeFinding_reco,
+                &v_tau_isNewDM,
                 &v_tau_IPcut,
-                input->v_tau_againstElectronLooseMVA6_reco,
-                input->v_tau_againstMuonLoose3_reco,
+                input->v_tau_byLooseDeepTau2017v2p1VSe_reco,
+                input->v_tau_byTightDeepTau2017v2p1VSmu_reco,
                 v_tau2_isolation,
                 &v_tau2_antiIsolationCut,
                 &v_tau_pTetaCut

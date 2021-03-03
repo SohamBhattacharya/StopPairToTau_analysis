@@ -345,11 +345,11 @@ namespace Analyze_tauTau
             tauInputFileName_fast = "ttbar_mc/output_tauIdIsoEfficiency/TTJets_13TeV-madgraphMLM_FastSim_Summer16_tauIdIsoEfficiency/custom_all_tauIdIsoEfficiency.root";
             tauInputFileName_full = "ttbar_mc/output_tauIdIsoEfficiency/TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16_tauIdIsoEfficiency/custom_all_tauIdIsoEfficiency.root";
             
-            tauHistName_num_fast = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
-            tauHistName_den_fast = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
+            tauHistName_num_fast = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
+            tauHistName_den_fast = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
             
-            tauHistName_num_full = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
-            tauHistName_den_full = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
+            tauHistName_num_full = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
+            tauHistName_den_full = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
         }
         
         else if(!strcmp(era, "2017"))
@@ -357,11 +357,11 @@ namespace Analyze_tauTau
             tauInputFileName_fast = "ttbar_mc/output_tauIdIsoEfficiency/TTJets_DiLept_TuneCP2_13TeV-madgraphMLM-pythia8_FastSim_Fall17_tauIdIsoEfficiency/custom_all_tauIdIsoEfficiency.root";
             tauInputFileName_full = "ttbar_mc/output_tauIdIsoEfficiency/TTJets_DiLept_TuneCP5_13TeV-madgraphMLM-pythia8_Fall17_tauIdIsoEfficiency/custom_all_tauIdIsoEfficiency.root";
             
-            tauHistName_num_fast = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
-            tauHistName_den_fast = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
+            tauHistName_num_fast = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
+            tauHistName_den_fast = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
             
-            tauHistName_num_full = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
-            tauHistName_den_full = "LooseDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
+            tauHistName_num_full = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_pT_vs_eta_reco";
+            tauHistName_den_full = "TightDeepTau2017v2p1VSjet_LooseDeepTau2017v2p1VSe_TightDeepTau2017v2p1VSmu/tau_all_pT_vs_eta_reco";
         }
         
         TauEfficiencyAndSF::TauFastFullSF *tauFastFullSimSFinfo = new TauEfficiencyAndSF::TauFastFullSF(
@@ -583,6 +583,7 @@ namespace Analyze_tauTau
                             (int) vv_massPointInfo.at(iMassPoint).at(1)
                         );
                         
+                        m_output_reco_stopPair_OS_genMatched.at(p_temp)->addCutFlow(5, "SRA"+std::to_string(iSRA+1));
                         m_output_reco_stopPair_OS_genMatched_baselineSRB.at(p_temp)->addCutFlow(5, "SRA"+std::to_string(iSRA+1));
                     }
                 }
@@ -615,6 +616,7 @@ namespace Analyze_tauTau
                             (int) vv_massPointInfo.at(iMassPoint).at(1)
                         );
                         
+                        m_output_reco_stopPair_OS_genMatched.at(p_temp)->addCutFlow(6, "SRB"+std::to_string(iSRB+1));
                         m_output_reco_stopPair_OS_genMatched_baselineSRB.at(p_temp)->addCutFlow(6, "SRB"+std::to_string(iSRB+1));
                     }
                 }
@@ -647,6 +649,7 @@ namespace Analyze_tauTau
                             (int) vv_massPointInfo.at(iMassPoint).at(1)
                         );
                         
+                        m_output_reco_stopPair_OS_genMatched.at(p_temp)->addCutFlow(6, "SRC"+std::to_string(iSRC+1));
                         m_output_reco_stopPair_OS_genMatched_baselineSRB.at(p_temp)->addCutFlow(6, "SRC"+std::to_string(iSRC+1));
                     }
                 }
@@ -679,6 +682,7 @@ namespace Analyze_tauTau
                             (int) vv_massPointInfo.at(iMassPoint).at(1)
                         );
                         
+                        m_output_reco_stopPair_OS_genMatched.at(p_temp)->addCutFlow(6, "SRD"+std::to_string(iSRD+1));
                         m_output_reco_stopPair_OS_genMatched_baselineSRB.at(p_temp)->addCutFlow(6, "SRD"+std::to_string(iSRD+1));
                     }
                 }

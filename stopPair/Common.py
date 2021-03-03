@@ -23,6 +23,8 @@ import Details
 import CMS_lumi
 import tdrstyle
 
+ROOT.gROOT.SetBatch(1)
+
 
 initVal = -9999
 
@@ -146,7 +148,7 @@ def getCombinedCutFlow(inputFiles, cutFlowName, details, debug,
             "DYJetsToLL_mc" in inputFiles[iFile].GetName()
             ) :
             
-            kFactorCorr = 6225.0 / 5765.0
+            kFactorCorr = 6233.55 / 5765.4
             
             eventWeight *= kFactorCorr
             
@@ -1196,7 +1198,7 @@ class HistogramDetails :
                 "DYJetsToLL_mc" in rootFileName
                 ) :
                 
-                kFactorCorr = 6225.0 / 5765.0
+                kFactorCorr = 6233.55 / 5765.4
                 
                 eventWeight *= kFactorCorr
                 
@@ -1761,8 +1763,11 @@ def plot1D(
     ) :
     
     ROOT.gStyle.SetOptStat(0)
+    #ROOT.gStyle.SetErrorX(1)
     
-    tdrstyle.setTDRStyle()
+    #tdrstyle.setTDRStyle()
+    ROOT.gROOT.LoadMacro("tdrstyle.C")
+    ROOT.gROOT.ProcessLine("setTDRStyle();")
     
     ROOT.gStyle.SetHatchesSpacing(7*ROOT.gStyle.GetHatchesSpacing())
     ROOT.gStyle.SetHatchesLineWidth(1)
@@ -2057,7 +2062,7 @@ def plot1D(
         
         #gr_mc_totalErr.SetFillStyle(3005)
         gr_mc_totalErr.SetFillStyle(3354)
-        #gr_mc_totalErr.SetFillColorAlpha(16, 0.5)
+        gr_mc_totalErr.SetFillColorAlpha(1, 1.0)
         gr_mc_totalErr.SetMarkerSize(0)
         gr_mc_totalErr.SetLineWidth(0)
         gr_mc_totalErr.Draw("E2")
@@ -2127,7 +2132,7 @@ def plot1D(
         
         l_histDetail_data[iHist].hist.Draw("same %s" %(dataHistDrawOption))
         
-        legend.AddEntry(l_histDetail_data[iHist].hist, l_histDetail_data[iHist].histLabel, "LPE")
+        legend.AddEntry(l_histDetail_data[iHist].hist, l_histDetail_data[iHist].histLabel, "LPE1")
         
         #legendEntries = legend.GetListOfPrimitives()
         #legendEntries.AddAt(legendEntries.Last(), 0)

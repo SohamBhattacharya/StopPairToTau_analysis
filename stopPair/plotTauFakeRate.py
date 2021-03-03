@@ -80,6 +80,7 @@ l_inputFileName = l_inputFileName[era+suffix]
 
 l_pTbin = [0, 40, 80, 150, 500]
 #l_pTbin = [0, 40, 80, 120, 160, 200]
+l_etaBin = numpy.array(list(range(-24, 25, 3))) / 10.0
 l_nPVbin = numpy.append(numpy.arange(0, 40, 10), [60, 100])
 l_METbin = numpy.arange(0, 60, 10)
 l_mT2bin = numpy.append(numpy.arange(0, 80, 20), [100])
@@ -138,8 +139,10 @@ def getHist(l_fileName, histName) :
 
 def plot(plotInfo) :
     
-    tdrstyle.setTDRStyle()
+    #tdrstyle.setTDRStyle()
     #ROOT.gROOT.ForceStyle()
+    ROOT.gROOT.LoadMacro("tdrstyle.C")
+    ROOT.gROOT.ProcessLine("setTDRStyle();")
     
     canvas = TCanvas("canvas", "canvas")
     #canvas.SetCanvasSize(600, 600)
@@ -276,13 +279,23 @@ def plot(plotInfo) :
 
 
 
+#plotInfo = PlotInfo()
+#plotInfo.histName = "tau_pT_vs_DM_reco"
+#plotInfo.l_rebin = l_pTbin
+#plotInfo.setXmin = True
+#plotInfo.xMin = 40
+#plotInfo.xTitle = "#tau_{h} p_{T} [GeV]"
+#plotInfo.outFileName = "tauFakeRate_pT"
+#plot(plotInfo)
+
+
 plotInfo = PlotInfo()
-plotInfo.histName = "tau_pT_vs_DM_reco"
-plotInfo.l_rebin = l_pTbin
+plotInfo.histName = "tau_eta_reco"
+plotInfo.l_rebin = l_etaBin
 plotInfo.setXmin = True
-plotInfo.xMin = 40
-plotInfo.xTitle = "#tau_{h} p_{T} [GeV]"
-plotInfo.outFileName = "tauFakeRate_pT"
+plotInfo.xMin = l_etaBin[0]
+plotInfo.xTitle = "#tau_{h} #eta"
+plotInfo.outFileName = "tauFakeRate_eta"
 plot(plotInfo)
 
 

@@ -77,14 +77,17 @@ condorConfig_nameTemplate = "condor_config_%s.sub"
 command_template = "condor_submit %s"
 
 
-nJob_total = 0
-nJob_succ = 0
-nJob_fail = 0
-nJob_rmvd = 0
-nJob_abrt = 0
+nDir = len(l_directory)
+
+l_nJob_total = [0] * nDir
+l_nJob_succ = [0] * nDir
+l_nJob_fail = [0] * nDir
+l_nJob_rmvd = [0] * nDir
+l_nJob_abrt = [0] * nDir
+
 
 # Check if all the directories exist
-for iDir in range(0, len(l_directory)) :
+for iDir in range(0, nDir) :
     
     directory = l_directory[iDir]
     
@@ -94,14 +97,20 @@ for iDir in range(0, len(l_directory)) :
         exit(1)
 
 
-for iDir in range(0, len(l_directory)) :
+for iDir in range(0, nDir) :
     
     directory = l_directory[iDir]
     
     print "\n"
-    print "**************************************************"
-    print "Directory:", directory
-    print "**************************************************"
+    print "*"*50
+    print "Directory %d/%d: %s" %(iDir+1, nDir, directory)
+    print "*"*50
+    
+    nJob_total = 0
+    nJob_succ = 0
+    nJob_fail = 0
+    nJob_rmvd = 0
+    nJob_abrt = 0
     
     l_fileName = glob.glob(directory + "/**")
     l_fileName = [f for f in l_fileName if extension_log in f]
@@ -238,11 +247,44 @@ for iDir in range(0, len(l_directory)) :
         if (hasPrinted) :
             
             print "\n"
+    
+    
+    l_nJob_total[iDir] = nJob_total
+    l_nJob_succ[iDir]  = nJob_succ
+    l_nJob_fail[iDir]  = nJob_fail
+    l_nJob_rmvd[iDir]  = nJob_rmvd
+    l_nJob_abrt[iDir]  = nJob_abrt
 
+
+print "\n"
+print "_"*100
+print ""
+
+for iDir in range(0, nDir) :
+    
+    directory = l_directory[iDir]
+    
+    nDigit = len(str(l_nJob_total[iDir]))
+    
+    print "Directory %d/%d: %s" %(iDir+1, nDir, directory)
+    print "Number of succeeded jobs: %0*d/%d" %(nDigit, l_nJob_succ[iDir], l_nJob_total[iDir])
+    print "Number of failed jobs   : %0*d/%d" %(nDigit, l_nJob_fail[iDir], l_nJob_total[iDir])
+    print "Number of removed jobs  : %0*d/%d" %(nDigit, l_nJob_rmvd[iDir], l_nJob_total[iDir])
+    print "Number of aborted jobs  : %0*d/%d" %(nDigit, l_nJob_abrt[iDir], l_nJob_total[iDir])
+    print ""
+
+
+nJob_total = sum(l_nJob_total)
+nJob_succ  = sum(l_nJob_succ)
+nJob_fail  = sum(l_nJob_fail)
+nJob_rmvd  = sum(l_nJob_rmvd)
+nJob_abrt  = sum(l_nJob_abrt)
 
 nDigit = len(str(nJob_total))
 
 print "\n"
+print "_"*100
+print ""
 print "Total number of succeeded jobs: %0*d/%d" %(nDigit, nJob_succ, nJob_total)
 print "Total number of failed jobs   : %0*d/%d" %(nDigit, nJob_fail, nJob_total)
 print "Total number of removed jobs  : %0*d/%d" %(nDigit, nJob_rmvd, nJob_total)

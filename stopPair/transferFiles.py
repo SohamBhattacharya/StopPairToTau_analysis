@@ -14,66 +14,83 @@ l_location["2016"] = [
     ##"tauTau_data/output_tauTau_fakeRate",
     ##"tauTau_data/output_tauTau_fakeEstimation",
     
-    #"elMu_data/output_analyzed/MuonEG_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    #"elMu_data/output_analyzed/MuonEG_Run2016C-07Aug17-v1_MINIAOD",
-    #"elMu_data/output_analyzed/MuonEG_Run2016D-07Aug17-v1_MINIAOD",
-    #"elMu_data/output_analyzed/MuonEG_Run2016E-07Aug17-v1_MINIAOD",
-    #"elMu_data/output_analyzed/MuonEG_Run2016F-07Aug17-v1_MINIAOD",
-    #"elMu_data/output_analyzed/MuonEG_Run2016G-07Aug17-v1_MINIAOD",
-    #"elMu_data/output_analyzed/MuonEG_Run2016H-07Aug17-v1_MINIAOD",
-    
-    
-    #"muMu_data/output_analyzed/SingleMuon_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    #"muMu_data/output_analyzed/SingleMuon_Run2016C-07Aug17-v1_MINIAOD",
-    #"muMu_data/output_analyzed/SingleMuon_Run2016D-07Aug17-v1_MINIAOD",
-    #"muMu_data/output_analyzed/SingleMuon_Run2016E-07Aug17-v1_MINIAOD",
-    #"muMu_data/output_analyzed/SingleMuon_Run2016F-07Aug17-v1_MINIAOD",
-    #"muMu_data/output_analyzed/SingleMuon_Run2016G-07Aug17-v1_MINIAOD",
-    #"muMu_data/output_analyzed/SingleMuon_Run2016H-07Aug17-v1_MINIAOD",
-    
-    
-    #"muTau_data/output_analyzed/SingleMuon_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    #"muTau_data/output_analyzed/SingleMuon_Run2016C-07Aug17-v1_MINIAOD",
-    #"muTau_data/output_analyzed/SingleMuon_Run2016D-07Aug17-v1_MINIAOD",
-    #"muTau_data/output_analyzed/SingleMuon_Run2016E-07Aug17-v1_MINIAOD",
-    #"muTau_data/output_analyzed/SingleMuon_Run2016F-07Aug17-v1_MINIAOD",
-    #"muTau_data/output_analyzed/SingleMuon_Run2016G-07Aug17-v1_MINIAOD",
-    #"muTau_data/output_analyzed/SingleMuon_Run2016H-07Aug17-v1_MINIAOD",
-    
-    
-    #"tauTau_data/output_analyzed/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016C-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016D-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016E-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016F-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016G-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_analyzed/Tau_Run2016H-07Aug17-v1_MINIAOD",
-    
-    
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016B-17Jul2018_ver2-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016C-17Jul2018-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016D-17Jul2018-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016E-17Jul2018-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016F-17Jul2018-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016G-17Jul2018-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeRate/Tau_Run2016H-17Jul2018-v1_MINIAOD",
-    
-    
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016C-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016D-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016E-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016F-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-07Aug17-v1_MINIAOD",
-    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-07Aug17-v1_MINIAOD",
-    
-    
-    #"DYJetsToLL_mc/output_analyzed/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY1JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY2JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY3JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
-    #"DYJetsToLL_mc/output_analyzed/DY4JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016C-07Aug17-v1_MINIAOD",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016D-07Aug17-v1_MINIAOD",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016E-07Aug17-v1_MINIAOD",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016F-07Aug17-v1_MINIAOD",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016G-07Aug17-v1_MINIAOD",
+    ##"elMu_data/output_analyzed/MuonEG_Run2016H-07Aug17-v1_MINIAOD",
     #
+    #
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016C-07Aug17-v1_MINIAOD",
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016D-07Aug17-v1_MINIAOD",
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016E-07Aug17-v1_MINIAOD",
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016F-07Aug17-v1_MINIAOD",
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016G-07Aug17-v1_MINIAOD",
+    ##"muMu_data/output_analyzed/SingleMuon_Run2016H-07Aug17-v1_MINIAOD",
+    #
+    #
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016C-07Aug17-v1_MINIAOD",
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016D-07Aug17-v1_MINIAOD",
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016E-07Aug17-v1_MINIAOD",
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016F-07Aug17-v1_MINIAOD",
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016G-07Aug17-v1_MINIAOD",
+    ##"muTau_data/output_analyzed/SingleMuon_Run2016H-07Aug17-v1_MINIAOD",
+    #
+    #
+    ##"tauTau_data/output_analyzed/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016C-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016D-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016E-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016F-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016G-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_analyzed/Tau_Run2016H-07Aug17-v1_MINIAOD",
+    #
+    #
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016B-17Jul2018_ver2-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016C-17Jul2018-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016D-17Jul2018-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016E-17Jul2018-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016F-17Jul2018-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016G-17Jul2018-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeRate/Tau_Run2016H-17Jul2018-v1_MINIAOD",
+    #
+    #
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016B-07Aug17_ver2-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016C-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016D-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016E-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016F-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-07Aug17-v1_MINIAOD",
+    ##"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-07Aug17-v1_MINIAOD",
+    
+    
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016B-17Jul2018_ver2-v1_MINIAOD",
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016C-17Jul2018-v1_MINIAOD",
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016D-17Jul2018-v1_MINIAOD",
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016E-17Jul2018-v1_MINIAOD",
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016F-17Jul2018-v1_MINIAOD",
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016G-17Jul2018-v1_MINIAOD",
+    #"tauTau_data/output_tauTau_fakeEstimation/Tau_Run2016H-17Jul2018-v1_MINIAOD",
+    
+    
+    "tauTau_data/output_analyzed/Tau_Run2016B-17Jul2018_ver2-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016C-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016D-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016E-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016F-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016G-17Jul2018-v1_MINIAOD",
+    "tauTau_data/output_analyzed/Tau_Run2016H-17Jul2018-v1_MINIAOD",
+    
+    "DYJetsToLL_mc/output_analyzed/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY1JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY2JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY3JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    "DYJetsToLL_mc/output_analyzed/DY4JetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+    
     #"WJetsToLNu_mc/output_analyzed/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
     #"WJetsToLNu_mc/output_analyzed/W1JetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
     #"WJetsToLNu_mc/output_analyzed/W2JetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
@@ -227,7 +244,7 @@ l_syst_tauTau_analysis = [
 
 l_systName_tauTau_fakeEstimation = [
     "",
-    #
+    
     #"tauFakeRateRegion-systUp",
     #"tauFakeRateRegion-systDown",
     #
@@ -262,33 +279,33 @@ l_tauTau_scaleVarIndex = [
 #l_scaleVarIndex = [0]
 
 
-#fileNamePattern = "*custom_all_analyzed.root"
-#suffix = "_tauTau_analysis"
-##suffix = "_tauTau_analysis_noBaseline"
-##suffix = "_tauTau_analysis_nJetGeq1"
-##suffix = "_tauTau_analysis_gtr1sigmaBins2016"
-##suffix = "_tauTau_analysis_partialUnblinding2017"
-##suffix = "_tauTau_analysis_nFakeTauGeq1"
-##suffix = "_tauTau_analysis_baselineSRB_METleq50"
-##suffix = "_tauTau_analysis_baselineSRB_METleq50_nFakeTauGeq1"
-##suffix = "_tauTau_analysis_DYCR_withZpTreweighting"
-#l_syst = l_syst_tauTau_analysis
-#l_scaleVarIndex = l_tauTau_scaleVarIndex
+fileNamePattern = "*custom_all_analyzed.root"
+suffix = "_tauTau_analysis"
+#suffix = "_tauTau_analysis_noBaseline"
+#suffix = "_tauTau_analysis_nJetGeq1"
+#suffix = "_tauTau_analysis_gtr1sigmaBins2016"
+#suffix = "_tauTau_analysis_partialUnblinding2017"
+#suffix = "_tauTau_analysis_nFakeTauGeq1"
+#suffix = "_tauTau_analysis_baselineSRB_METleq50"
+#suffix = "_tauTau_analysis_baselineSRB_METleq50_nFakeTauGeq1"
+#suffix = "_tauTau_analysis_DYCR_withZpTreweighting"
+l_syst = l_syst_tauTau_analysis
+l_scaleVarIndex = l_tauTau_scaleVarIndex
 
 
-fileNamePattern = "*custom_all_fakeRate_tauTau.root"
-suffix = "_tauTau_fakeRate"
-#suffix = "_tauTau_fakeRate_METleq20"
-l_syst = [""]
-l_scaleVarIndex = [0]
+#fileNamePattern = "*custom_all_fakeRate_tauTau.root"
+#suffix = "_tauTau_fakeRate"
+##suffix = "_tauTau_fakeRate_METleq20"
+#l_syst = [""]
+#l_scaleVarIndex = [0]
 
 
 #fileNamePattern = "*custom_all_fakeEstimation_tauTau.root"
-##suffix = "_tauTau_fakeEstimation"
+#suffix = "_tauTau_fakeEstimation"
 ##suffix = "_tauTau_fakeEstimation_noBaseline"
 ##suffix = "_tauTau_fakeEstimation_nJetGeq1"
 ##suffix = "_tauTau_fakeEstimation_gtr1sigmaBins2016"
-#suffix = "_tauTau_fakeEstimation_baselineSRB_METleq50"
+##suffix = "_tauTau_fakeEstimation_baselineSRB_METleq50"
 ##suffix = "_tauTau_fakeEstimation_DYCR"
 #l_syst = l_systName_tauTau_fakeEstimation
 #l_scaleVarIndex = [0]
@@ -336,7 +353,8 @@ for iLocation in range(0, len(l_location[era])) :
             
             #os.system("mkdir -p %s" %(destination))
             
-            command = "rsync -asP --include \"%s\" --include \"*/\" --exclude \"*\" %s %s" %(fileNamePattern, source, destination)
+            command = "rsync -asP -W -z --include \"%s\" --include \"*/\" --exclude \"*\" %s %s" %(fileNamePattern, source, destination)
+            #command = "rsync -avhP -W --no-compress --include \"%s\" --include \"*/\" --exclude \"*\" %s %s" %(fileNamePattern, source, destination)
             
             print ""
             print "**********"
@@ -347,4 +365,9 @@ for iLocation in range(0, len(l_location[era])) :
             
             command = "sshpass -p %s %s" %(pwd, command)
             
-            os.system(command)
+            cmdReturn = os.system(command)
+            
+            if (cmdReturn) :
+                
+                print "Error in transfer. Exiting."
+                exit(1)

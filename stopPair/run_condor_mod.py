@@ -928,8 +928,8 @@ dictionary["ttbar_mc"] = {
         "2016": [
             "TT_TuneCUETP8M2T4_13TeV-powheg-pythia8_Summer16",
             
-            "TTJets_13TeV-madgraphMLM_FastSim_Summer16",
-            "TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
+            #"TTJets_13TeV-madgraphMLM_FastSim_Summer16",
+            #"TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_Summer16",
         ],
         
         "2017": [

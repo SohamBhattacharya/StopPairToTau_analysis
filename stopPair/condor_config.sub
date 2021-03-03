@@ -13,6 +13,10 @@ when_to_transfer_output = ON_EXIT
 
 getenv = True
 
+# In MB, GB, etc.
+#request_disk = 10GB
+#request_memory = 4GB
+
 # Send the job to Held state on failure. 
 #on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)
 

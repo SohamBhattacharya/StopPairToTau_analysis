@@ -141,11 +141,14 @@ namespace Output_RECO
         TH1F *h1_tau_pT;
         
         TH2F *h2_tau_pT_vs_DM;
+        TH2F *h2_tau_eta_vs_DM;
         TH2F *h2_MET_vs_DM;
         TH2F *h2_tauTau_MET_mT2_vs_DM;
         TH2F *h2_tauTau_jet_HT_vs_DM;
         TH2F *h2_b_n_vs_DM;
         TH2F *h2_tau_nPV_vs_DM;
+        
+        TH3F *h3_tau_pT_eta_DM;
         
         std::vector <TH1F*>
             v_h1_tau_pT_gen,

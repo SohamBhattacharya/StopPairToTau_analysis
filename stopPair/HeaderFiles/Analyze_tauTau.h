@@ -611,8 +611,8 @@ namespace Analyze_tauTau
                 input->v_tau_isTriggerMatched_reco,
                 &v_tau_isNewDM,
                 &v_tau_IPcut,
-                input->v_tau_byTightDeepTau2017v2p1VSe_reco,
-                input->v_tau_byLooseDeepTau2017v2p1VSmu_reco,
+                input->v_tau_byLooseDeepTau2017v2p1VSe_reco,
+                input->v_tau_byTightDeepTau2017v2p1VSmu_reco,
                 input->v_tau_byTightDeepTau2017v2p1VSjet_reco,
                 &v_tau_pTetaCut
             };

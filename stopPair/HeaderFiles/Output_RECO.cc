@@ -217,11 +217,14 @@ namespace Output_RECO
             h1_tau_pT = new TH1F(("tau_pT_reco" + std::string(nameAddon)).c_str(), ("p_{T, #tau} RECO" + std::string(titleAddon)).c_str(), 200, 0, 2000);
             
             h2_tau_pT_vs_DM = new TH2F(("tau_pT_vs_DM_reco" + std::string(nameAddon)).c_str(), ("p_{T, #tau} vs. DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 200, 0.0, 2000.0);
+            h2_tau_eta_vs_DM = new TH2F(("tau_eta_vs_DM_reco" + std::string(nameAddon)).c_str(), ("#eta_{#tau} vs. DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 120, -3.0, 3.0);
             h2_MET_vs_DM = new TH2F(("MET_vs_DM_reco" + std::string(nameAddon)).c_str(), ("MET_vs_DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 200, 0.0, 2000.0);
             h2_tauTau_MET_mT2_vs_DM = new TH2F(("tauTau_MET_mT2_vs_DM_reco" + std::string(nameAddon)).c_str(), ("tauTau_MET_mT2_vs_DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 100, 0, 1000);
             h2_tauTau_jet_HT_vs_DM = new TH2F(("tauTau_jet_HT_vs_DM_reco" + std::string(nameAddon)).c_str(), ("tauTau_jet_HT_vs_DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 200, 0.0, 2000.0);
             h2_b_n_vs_DM = new TH2F(("b_n_vs_DM_reco" + std::string(nameAddon)).c_str(), ("b_n_vs_DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 30, 0.0, 30.0);
             h2_tau_nPV_vs_DM = new TH2F(("tau_nPV_vs_DM_reco" + std::string(nameAddon)).c_str(), ("PU vs. DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 100, 0.0, 100.0);
+            
+            h3_tau_pT_eta_DM = new TH3F(("tau_pT_eta_DM" + std::string(nameAddon)).c_str(), ("p_{T, #tau} vs. #eta_{#tau} vs. DM RECO" + std::string(titleAddon)).c_str(), 30, 0.0, 30.0, 120, -3.0, 3.0, 200, 0, 2000);
         }
         
         if(output_tauTau)
@@ -896,11 +899,14 @@ namespace Output_RECO
             h1_tau_pT->Write();
             
             h2_tau_pT_vs_DM->Write();
+            h2_tau_eta_vs_DM->Write();
             h2_MET_vs_DM->Write();
             h2_tauTau_MET_mT2_vs_DM->Write();
             h2_tauTau_jet_HT_vs_DM->Write();
             h2_b_n_vs_DM->Write();
             h2_tau_nPV_vs_DM->Write();
+            
+            h3_tau_pT_eta_DM->Write();
             
             for(int i = 0; i < v_h1_tau_pT.size(); i++)
             {
@@ -1267,11 +1273,14 @@ namespace Output_RECO
             delete h1_tau_pT;
             
             delete h2_tau_pT_vs_DM;
+            delete h2_tau_eta_vs_DM;
             delete h2_MET_vs_DM;
             delete h2_tauTau_MET_mT2_vs_DM;
             delete h2_tauTau_jet_HT_vs_DM;
             delete h2_b_n_vs_DM;
             delete h2_tau_nPV_vs_DM;
+            
+            delete h3_tau_pT_eta_DM;
             
             for(int i = 0; i < v_h1_tau_pT.size(); i++)
             {

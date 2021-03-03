@@ -4,7 +4,7 @@ syntax:
 rsync -asP --include "pattern" --include "*/" --exclude "*" <source> <destination>
 
 example:
-rsync -asP --exclude "*.root" --exclude "*.svn*" --exclude "*fuse*" --exclude "weights/*" --exclude "temp/*" --exclude "plots*" --exclude "documentation/*" --exclude "cutFlowTables*" --exclude "systematicsTables*" --exclude "logs*" --exclude "condorJobs/*" --exclude "*sourceFiles*" --exclude "*.pdf" --exclude "*.log" --exclude "*.pyc" --exclude "*output_analyzed*" --exclude "*output_pileUp*" --exclude "*output_bTaggingEfficiency*" --exclude "*output_tauIdIsoEfficiency*" --exclude "*output_tauTau_fakeRate*" --exclude "*output_tauTau_fakeEstimation*" --exclude "output_TMVAtree" --exclude "*output_combine*" --exclude "*output*" ./* sobhatta@ui.indiacms.res.in:/home/sobhatta/t3store3/stopPairToTau/analysis/CMSSW_10_5_0/src/stopPair/
+rsync -asP --exclude "*.root" --exclude "*.svn*" --exclude "*fuse*" --exclude "weights/*" --exclude "temp/*" --exclude "plots*" --exclude "documentation*" --exclude "cutFlowTables*" --exclude "systematicsTables*" --exclude "logs*" --exclude "condorJobs/*" --exclude "*sourceFiles*" --exclude "*.pdf" --exclude "*.log" --exclude "*.pyc" --exclude "*output_analyzed*" --exclude "*output_pileUp*" --exclude "*output_bTaggingEfficiency*" --exclude "*output_tauIdIsoEfficiency*" --exclude "*output_tauTau_fakeRate*" --exclude "*output_tauTau_fakeEstimation*" --exclude "output_TMVAtree" --exclude "*output_combine*" --exclude "*output*" ./* sobhatta@ui.indiacms.res.in:/home/sobhatta/t3store3/stopPairToTau/analysis/CMSSW_10_5_0/src/stopPair/
 
 
 for f in $(ls *.txt); do d=${f%_custom.txt}; echo $d; mkdir -p $d; mv $f $d/; done

@@ -242,7 +242,7 @@ namespace Common
         b_etaCut_reco = 2.4;
     
     
-    const std::vector <double> v_tau_promptFake_pTbin = {0, 40, 80, 150, 500};
+    const std::vector <double> v_tau_promptFake_pTbin = {0, 40, 80, 150, 300, 500};
     
     
     const std::vector <double> v_tau_n_SRA = {2};

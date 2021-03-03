@@ -1,6 +1,7 @@
 import argparse
 import collections
 import copy
+import hepdata_lib
 import numpy
 import os
 import pprint
@@ -8,6 +9,7 @@ import sys
 import tabulate
 
 import ROOT
+ROOT.gROOT.SetBatch(1)
 
 
 import Array2LatexTable
@@ -18,14 +20,13 @@ parser = argparse.ArgumentParser()
 
 # List of directories
 parser.add_argument(
-    "--era",
-    help = "Era",
-    #nargs = "*",
+    "--eras",
+    help = "Eras",
+    nargs = "*",
     type = str,
-    choices = ["2016", "2017", "2016+2017"],
+    choices = ["2016", "2017"],
     required = True,
 )
-
 
 parser.add_argument(
     "--xVal",
@@ -37,10 +38,40 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--noPrelim",
+    help = "Remove \"Preliminary\" from plots",
+    default = False,
+    action = "store_true",
+)
+
+parser.add_argument(
+    "--noSigGenMET",
+    help = "Do not use signal FastSim MET correction",
+    default = False,
+    action = "store_true",
+)
+
+parser.add_argument(
+    "--lumiScale",
+    help = "Scale the luminosity by this factor",
+    #nargs = "*",
+    type = float,
+    required = False,
+    default = 1.0,
+)
+
+parser.add_argument(
     "--card",
     help = "Make combine cards",
     default = False,
     action = "store_true",
+)
+
+parser.add_argument(
+    "--cardSuffix",
+    help = "Card filename suffix",
+    type = str,
+    default = "",
 )
 
 parser.add_argument(
@@ -85,6 +116,15 @@ parser.add_argument(
     action = "store_true",
 )
 
+
+
+#parser.add_argument(
+#    "--HEPData",
+#    help = "Create HEPData yaml files",
+#    default = False,
+#    action = "store_true",
+#)
+
 # Parse arguments
 args = parser.parse_args()
 
@@ -95,8 +135,9 @@ if (args.pseudodataSB and args.pseudodataB) :
 
 print args.card
 print args.syst
+print args.eras
 
-if (args.era == "2016+2017" and (not args.SRyield and not args.syst)) :
+if (len(args.eras) > 1 and (not args.SRyield and not args.syst)) :
     
     print "Error: Eras can be combined for yield and systematics outputs only."
     exit(1)
@@ -113,13 +154,19 @@ import Details
 # Go to analysis directory
 #os.chdir(workingDir)
 
-era = args.era
+#era = args.era
+l_era = args.eras
 
 
-lumi_data = Details.luminosity_data[era]
-lumi_data_TTCR = Details.luminosity_data[era]
+d_lumi_data = copy.deepcopy(Details.luminosity_data)
+d_lumi_data_TTCR = copy.deepcopy(Details.luminosity_data)
 
-fakeScale = 1.0
+for era in d_lumi_data :
+    
+    d_lumi_data[era] *= args.lumiScale
+
+
+fakeScale = args.lumiScale
 
 #if (era == "2017") :
 #    
@@ -153,6 +200,7 @@ l_scaleVarIndex = [
 ]
 
 
+
 # Card block dictionaries
 d_block_data_template = {
     "bin": ["bin"],
@@ -184,40 +232,22 @@ l_corrSyst = [
 l_uncorrSyst = [
 ]
 
-def getCorrStr(systName, era, isCorr) :
-    
-    if (isCorr) :
-        
-        corrStr = "%s" %(systName)
-    
-    else :
-        
-        corrStr = "syst%s_%s" %(era, systName)
-    
-    #corrStr = ""
-    #
-    #if (systName in l_corrSyst) :
-    #    
-    #    corrStr = ""
-    #
-    #elif (systName in l_uncorrSyst) :
-    #    
-    #    corrStr = "syst%s_" %(era)
-    #
-    #else :
-    #    
-    #    print "Error in getCorrStr(...): Invalid systematic name (%s) provided." %(systName)
-    
-    return corrStr
+
+label_sig = "sig"
+label_DYJetsToLL = "DY" #Details.label_DYJetsToLL[0]
+label_ttbar = Details.label_ttbar[0]
+label_otherSM = "otherSM"
+label_fake = "fake"
 
 
 # Systematics dictionaries
 d_syst_sig = {
     "tauFastFullSimSF": {
-        "latexTitle": r"$ \tauh $ FastSim/FullSim",
+        "latexTitle": r"$ \tauh $ \textsc{FastSim}/{\GEANTfour}",
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
     },
 }
 
@@ -230,6 +260,10 @@ d_syst_commonMC = {
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     "pileupReweight": {
@@ -237,6 +271,10 @@ d_syst_commonMC = {
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     "tauIDisoSF": {
@@ -244,6 +282,10 @@ d_syst_commonMC = {
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     ##"triggerSF": {
@@ -252,17 +294,25 @@ d_syst_commonMC = {
     ##},
     
     "bTaggingSF": {
-        "latexTitle": r"b-tagging",
+        "latexTitle": r"\PQb tagging",
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     "JEC": {
-        "latexTitle": r"JEC",
+        "latexTitle": r"JES",
         "type": "lnN",
         "added": False,
         "correlated": True,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     "JER": {
@@ -270,6 +320,10 @@ d_syst_commonMC = {
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     "unclusteredEnergy": {
@@ -277,22 +331,54 @@ d_syst_commonMC = {
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
     
     "scale": {
-        "latexTitle": r"QCD scale",
+        "latexTitle": r"$ \mu_{\text{R}} $ and $ \mu_{\text{F}} $ scales",
         "type": "lnN",
         "added": False,
         "correlated": True,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
     },
+    
+    "luminosity": {
+        "latexTitle": r"Luminosity",
+        "type": "lnN",
+        "added": True,
+        "correlated": False,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
+    },
+    
+    "normalization": {
+        "latexTitle": r"Background normalization",
+        "type": "lnN",
+        "added": True,
+        "correlated": True,
+        label_sig: {},
+        label_ttbar: {},
+        label_DYJetsToLL: {},
+        label_otherSM: {},
+    }
 }
 
 d_syst_ttbar = {
-    #"topPtReweight": {
-    #    "latexTitle": r"Top $ \pt $ reweighting",
-    #    "type": "lnN",
-    #    "added": False,
-    #},
+    "ttbarSF": {
+        "latexTitle": r"$ \ttbar $ SF",
+        "type": "lnN",
+        "added": True,
+        "correlated": False,
+        label_ttbar: {},
+    }
 }
 
 l_syst_ttbar_toInclude = [
@@ -302,29 +388,34 @@ l_syst_ttbar_toInclude = [
 
 d_syst_DY = {
     "ZpTreweight": {
-        "latexTitle": r"Z $ \pt $ reweighting",
+        "latexTitle": r"\PZ $ \pt $ reweighting",
         "type": "lnN",
         "added": False,
         "correlated": False,
+        label_DYJetsToLL: {},
     },
 }
 
 d_syst_fake = {
     "tauFakeRateRegion": {
         #"latexTitle": r"$ \tauh $ fake-rate (region)",
-        "latexTitle": r"\vtop{\hbox{\strut $ \tauh $ fake-rate}\hbox{\strut ($ LL \to TL $ vs. $ TL \to TT $)}}",
+        "latexTitle": r"\vtop{\hbox{\strut $ \tauh $ misid. rate}\hbox{\strut ($ \text{LL} \to \text{TL} $ vs. $ \text{TL} \to \text{TT} $)}}",
         "type": "lnN",
         "added": False,
         "correlated": True,
+        label_fake: {},
     },
     
     "tauFakeRateJetPartonFlav": {
-        "latexTitle": r"$ \tauh $ fake-rate (parton flavour)",
+        "latexTitle": r"$ \tauh $ misid. rate (parton flavour)",
         "type": "lnN",
         "added": False,
         "correlated": True,
+        label_fake: {},
     },
 }
+
+
 
 
 # Number of independent uncertainties
@@ -358,11 +449,18 @@ d_process_sig = {
     }
 }
 
-process_sig = d_process_sig[era][args.xVal]
+#process_sig = d_process_sig[era][args.xVal]
+#massPointFile = "stopPair_mc/output_genParam/" + process_sig + "/XSweightInfo.txt"
+#massPointInfo = numpy.loadtxt(massPointFile, delimiter = ",")
 
-massPointFile = "stopPair_mc/output_genParam/" + process_sig + "/XSweightInfo.txt"
+d_massPointInfo = {}
 
-massPointInfo = numpy.loadtxt(massPointFile, delimiter = ",")
+for iEra in range(0, len(l_era)):
+    
+    era = l_era[iEra]
+    
+    massPointFile = "stopPair_mc/output_genParam/" + d_process_sig[era][args.xVal] + "/XSweightInfo.txt"
+    d_massPointInfo[era] = numpy.loadtxt(massPointFile, delimiter = ",")
 
 
 ############################################################
@@ -375,43 +473,53 @@ l_selectMassPoint = [
     #[700, 1],
     #[900, 400],
     #[1000, 1], [600, 425], [300, 150],
+    #[300, 100], [800, 300], [1000, 1],
+    #[800, 300],
 ]
 
 
 sig_x_str = ""
 sig_x_str_fileName = ""
 
-if ("XStau0p25" in process_sig) :
+if (args.xVal == "25") :
     
     sig_x_str = "0.25"
     sig_x_str_fileName = "x0p25"
 
-elif ("XStau0p5" in process_sig) :
+elif (args.xVal == "5") :
     
     sig_x_str = "0.5"
     sig_x_str_fileName = "x0p5"
 
-elif ("XStau0p75" in process_sig) :
+elif (args.xVal == "75") :
     
     sig_x_str = "0.75"
     sig_x_str_fileName = "x0p75"
 
 l_massPointYieldHist = []
-l_massPointYieldHist = [[300, 100], [500, 350], [800, 300]]
+#l_massPointYieldHist = [[300, 100], [500, 350], [800, 300]]
 
 l_massPointYieldHist_yieldTableExtra = []#[[300, 100]]
+
+
+#for ele in d_massPointInfo[l_era[0]] :
+#    
+#    massPoint = [ele[0], ele[1]]
+#    
+#    if (massPoint not in l_massPointYieldHist) :
+#        
+#        l_massPointYieldHist_yieldTableExtra.append(massPoint)
+
 
 if (args.SRyield and len(l_massPointYieldHist)) :
     
     l_massPointYieldHist = l_massPointYieldHist_yieldTableExtra + l_massPointYieldHist
 
+l_massPointYieldHist = sorted(l_massPointYieldHist, key = lambda x: (x[0], x[1]))
+
 d_massPointYieldHist = {}
 
 d_massPointSystTable = {}
-
-for ele in l_massPointYieldHist :
-    
-    d_massPointSystTable[(ele[0], ele[1])] = {}
 
 
 for ele in l_massPointYieldHist :
@@ -419,11 +527,26 @@ for ele in l_massPointYieldHist :
     if (ele not in l_selectMassPoint) :
         
         l_selectMassPoint.append(ele)
-
-
-if len(l_selectMassPoint) :
     
-    massPointInfo = numpy.array([ele for ele in massPointInfo if [int(ele[0]), int(ele[1])] in l_selectMassPoint])
+    sigKey = (ele[0], ele[1])
+    
+    d_massPointYieldHist[sigKey] = {}
+
+
+for iEra in range(0, len(l_era)) :
+    
+    era = l_era[iEra]
+    #d_massPointSystTable[era] = {}
+    
+    for ele in l_massPointYieldHist :
+        
+        sigKey = (ele[0], ele[1])
+        d_massPointSystTable[sigKey] = {}
+    
+    
+    if len(l_selectMassPoint) :
+        
+        d_massPointInfo[era] = numpy.array([ele for ele in d_massPointInfo[era] if [int(ele[0]), int(ele[1])] in l_selectMassPoint])
 
 ############################################################
 
@@ -510,33 +633,38 @@ ll_regionNumber_ttbarCR = [
 inputFiles_sig = []
 
 
-details_otherSM = \
-    Details.cutFlowDir_WJetsToLNu[era] + \
-    Details.cutFlowDir_VH[era] + \
-    Details.cutFlowDir_VV[era] + \
-    Details.cutFlowDir_WG[era] + \
-    Details.cutFlowDir_singleTop[era] + \
-    Details.cutFlowDir_TTX[era]
+d_details_otherSM = {}
+d_xs_otherSM = {}
 
-
-l_xs_otherSM = \
-    Details.crossSection_WJetsToLNu[era] + \
-    Details.crossSection_VH[era] + \
-    Details.crossSection_VV[era] + \
-    Details.crossSection_WG[era] + \
-    Details.crossSection_singleTop[era] + \
-    Details.crossSection_TTX[era]
+for iEra in range(0, len(l_era)):
+    
+    era = l_era[iEra]
+    
+    details_otherSM = \
+        Details.cutFlowDir_WJetsToLNu[era] + \
+        Details.cutFlowDir_VH[era] + \
+        Details.cutFlowDir_VV[era] + \
+        Details.cutFlowDir_WG[era] + \
+        Details.cutFlowDir_singleTop[era] + \
+        Details.cutFlowDir_TTX[era]
+    
+    
+    l_xs_otherSM = \
+        Details.crossSection_WJetsToLNu[era] + \
+        Details.crossSection_VH[era] + \
+        Details.crossSection_VV[era] + \
+        Details.crossSection_WG[era] + \
+        Details.crossSection_singleTop[era] + \
+        Details.crossSection_TTX[era]
+    
+    
+    d_details_otherSM[era] = details_otherSM
+    d_xs_otherSM[era] = l_xs_otherSM
 
 #details_otherSM = Details.cutFlowDir_singleTop[era]
 #
 #l_xs_otherSM = Details.crossSection_singleTop[era]
 
-
-label_sig = "sig"
-label_DYJetsToLL = "DY" #Details.label_DYJetsToLL[0]
-label_ttbar = Details.label_ttbar[0]
-label_otherSM = "otherSM"
-label_fake = "fake"
 
 #l_label_otherSM = [
 #    Details.label_WJetsToLNu,
@@ -547,12 +675,32 @@ label_fake = "fake"
 #]
 
 
-inputFiles_data = Common.getRootFiles(Details.cutFlowDir_tauTau_data[era], suffix_data, rootFileName_data)
+d_inputFiles_data = {}
 
-inputFiles_DYJetsToLL = Common.getRootFiles(Details.cutFlowDir_DYJetsToLL[era], suffix_mc, rootFileName_mc)
-inputFiles_ttbar = Common.getRootFiles(Details.cutFlowDir_ttbar[era], suffix_mc, rootFileName_mc)
-inputFiles_otherSM = Common.getRootFiles(details_otherSM, suffix_mc, rootFileName_mc)
-inputFiles_fake = Common.getRootFiles(Details.cutFlowDir_tauTau_fakeEstimation[era], suffix_fakeEstimation, rootFileName_fakeEstimation)
+d_inputFiles_DYJetsToLL = {}
+d_inputFiles_ttbar = {}
+d_inputFiles_otherSM = {}
+d_inputFiles_fake = {}
+
+
+for iEra in range(0, len(l_era)):
+    
+    era = l_era[iEra]
+    
+    inputFiles_data = Common.getRootFiles(Details.cutFlowDir_tauTau_data[era], suffix_data, rootFileName_data)
+    
+    inputFiles_DYJetsToLL = Common.getRootFiles(Details.cutFlowDir_DYJetsToLL[era], suffix_mc, rootFileName_mc)
+    inputFiles_ttbar = Common.getRootFiles(Details.cutFlowDir_ttbar[era], suffix_mc, rootFileName_mc)
+    inputFiles_otherSM = Common.getRootFiles(d_details_otherSM[era], suffix_mc, rootFileName_mc)
+    inputFiles_fake = Common.getRootFiles(Details.cutFlowDir_tauTau_fakeEstimation[era], suffix_fakeEstimation, rootFileName_fakeEstimation)
+    
+    
+    d_inputFiles_data[era] = inputFiles_data
+    
+    d_inputFiles_DYJetsToLL[era] = inputFiles_DYJetsToLL
+    d_inputFiles_ttbar[era] = inputFiles_ttbar
+    d_inputFiles_otherSM[era] = inputFiles_otherSM
+    d_inputFiles_fake[era] = inputFiles_fake
 
 
 prettyPrinter = pprint.PrettyPrinter(indent = 4)
@@ -607,71 +755,156 @@ def getRootFiles_ttbarCR(era, suffix, rootFileName) :
     return d_info_ttbarCR
 
 
-inputFiles_data_ttbarCR_elMu = Common.getRootFiles(Details.cutFlowDir_elMu_data[era], suffix_ttbarCR_elMu, rootFileName_ttbarCR)
-d_info_mc_ttbarCR_elMu = getRootFiles_ttbarCR(era = era, suffix = suffix_ttbarCR_elMu, rootFileName = rootFileName_ttbarCR)
+d_inputFiles_data_ttbarCR_elMu = {}
+d_inputFiles_data_ttbarCR_muMu = {}
 
-inputFiles_data_ttbarCR_muMu = Common.getRootFiles(Details.cutFlowDir_muMu_data[era], suffix_ttbarCR_muMu, rootFileName_ttbarCR)
-d_info_mc_ttbarCR_muMu = getRootFiles_ttbarCR(era = era, suffix = suffix_ttbarCR_muMu, rootFileName = rootFileName_ttbarCR)
+d_info_mc_ttbarCR_elMu = {}
+d_info_mc_ttbarCR_muMu = {}
+
+
+for iEra in range(0, len(l_era)):
+    
+    era = l_era[iEra]
+    
+    d_inputFiles_data_ttbarCR_elMu[era] = Common.getRootFiles(Details.cutFlowDir_elMu_data[era], suffix_ttbarCR_elMu, rootFileName_ttbarCR)
+    d_info_mc_ttbarCR_elMu[era] = getRootFiles_ttbarCR(era = era, suffix = suffix_ttbarCR_elMu, rootFileName = rootFileName_ttbarCR)
+    
+    d_inputFiles_data_ttbarCR_muMu[era] = Common.getRootFiles(Details.cutFlowDir_muMu_data[era], suffix_ttbarCR_muMu, rootFileName_ttbarCR)
+    d_info_mc_ttbarCR_muMu[era] = getRootFiles_ttbarCR(era = era, suffix = suffix_ttbarCR_muMu, rootFileName = rootFileName_ttbarCR)
 
 
 ##################################################
-# Getting the info for the background
+# Getting the info for data and background
 ##################################################
 
-for systKey in d_syst_commonMC :
+
+d_yieldResult_data = {}
+
+d_yieldResult_nominal_ttbar = {}
+d_yieldResult_nominal_DYJetsToLL = {}
+d_yieldResult_nominal_otherSM = {}
+d_yieldResult_nominal_fake = {}
+
+for iEra in range(0, len(l_era)):
     
-    if (d_syst_commonMC[systKey]["added"]) :
-        
-        continue
+    era = l_era[iEra]
+    eraStr = "_%s" %(era)
     
     
-    if (systKey == "scale") :
+    for systKey in d_syst_commonMC :
         
-        systResult_ttbar = Common.getScaleUncertainty(
-            l_rootFileDir = Details.cutFlowDir_ttbar[era],
-            rootFileName = rootFileName_mc,
-            l_xs = Details.crossSection_ttbar[era],
-            l_scaleVarIndex = l_scaleVarIndex,
-            suffix = suffix_mc,
-            histName_base = histName_base,
-            detailStr = detailStr_mc,
-            nRegion = nSR,
-            yieldBinNumber = finalYieldBin,
-            ll_regionNumber = ll_regionNumber_SR,
-            debug = debug,
-        )
+        if (d_syst_commonMC[systKey]["added"]) :
+            
+            continue
         
         
-        systResult_DYJetsToLL = Common.getScaleUncertainty(
-            l_rootFileDir = Details.cutFlowDir_DYJetsToLL[era],
-            rootFileName = rootFileName_mc,
-            l_xs = Details.crossSection_DYJetsToLL[era],
-            l_scaleVarIndex = l_scaleVarIndex,
-            suffix = suffix_mc,
-            histName_base = histName_base,
-            detailStr = detailStr_mc,
-            nRegion = nSR,
-            yieldBinNumber = finalYieldBin,
-            ll_regionNumber = ll_regionNumber_SR,
-            debug = debug,
-        )
+        if (systKey == "scale") :
+            
+            systResult_ttbar = Common.getScaleUncertainty(
+                l_rootFileDir = Details.cutFlowDir_ttbar[era],
+                rootFileName = rootFileName_mc,
+                l_xs = Details.crossSection_ttbar[era],
+                l_scaleVarIndex = l_scaleVarIndex,
+                suffix = suffix_mc,
+                histName_base = histName_base,
+                detailStr = detailStr_mc,
+                nRegion = nSR,
+                yieldBinNumber = finalYieldBin,
+                ll_regionNumber = ll_regionNumber_SR,
+                debug = debug,
+            )
+            
+            
+            systResult_DYJetsToLL = Common.getScaleUncertainty(
+                l_rootFileDir = Details.cutFlowDir_DYJetsToLL[era],
+                rootFileName = rootFileName_mc,
+                l_xs = Details.crossSection_DYJetsToLL[era],
+                l_scaleVarIndex = l_scaleVarIndex,
+                suffix = suffix_mc,
+                histName_base = histName_base,
+                detailStr = detailStr_mc,
+                nRegion = nSR,
+                yieldBinNumber = finalYieldBin,
+                ll_regionNumber = ll_regionNumber_SR,
+                debug = debug,
+            )
+            
+            
+            systResult_otherSM = Common.getScaleUncertainty(
+                l_rootFileDir = d_details_otherSM[era],
+                rootFileName = rootFileName_mc,
+                l_xs = d_xs_otherSM[era],
+                l_scaleVarIndex = l_scaleVarIndex,
+                suffix = suffix_mc,
+                histName_base = histName_base,
+                detailStr = detailStr_mc,
+                nRegion = nSR,
+                yieldBinNumber = finalYieldBin,
+                ll_regionNumber = ll_regionNumber_SR,
+                debug = debug,
+            )
+        
+        else :
+            
+            systResult_ttbar = Common.getSystematics(
+                l_rootFileDir = Details.cutFlowDir_ttbar[era],
+                rootFileName = rootFileName_mc,
+                l_xs = Details.crossSection_ttbar[era],
+                suffix = suffix_mc,
+                systStr = systKey,
+                histName_base = histName_base,
+                detailStr = detailStr_mc,
+                nRegion = nSR,
+                yieldBinNumber = finalYieldBin,
+                ll_regionNumber = ll_regionNumber_SR,
+                debug = debug,
+            )
+            
+            
+            systResult_DYJetsToLL = Common.getSystematics(
+                l_rootFileDir = Details.cutFlowDir_DYJetsToLL[era],
+                rootFileName = rootFileName_mc,
+                l_xs = Details.crossSection_DYJetsToLL[era],
+                suffix = suffix_mc,
+                systStr = systKey,
+                histName_base = histName_base,
+                detailStr = detailStr_mc,
+                nRegion = nSR,
+                yieldBinNumber = finalYieldBin,
+                ll_regionNumber = ll_regionNumber_SR,
+                debug = debug,
+            )
+            
+            
+            systResult_otherSM = Common.getSystematics(
+                l_rootFileDir = d_details_otherSM[era],
+                rootFileName = rootFileName_mc,
+                l_xs = d_xs_otherSM[era],
+                suffix = suffix_mc,
+                systStr = systKey,
+                histName_base = histName_base,
+                detailStr = detailStr_mc,
+                nRegion = nSR,
+                yieldBinNumber = finalYieldBin,
+                ll_regionNumber = ll_regionNumber_SR,
+                debug = debug,
+            )
         
         
-        systResult_otherSM = Common.getScaleUncertainty(
-            l_rootFileDir = details_otherSM,
-            rootFileName = rootFileName_mc,
-            l_xs = l_xs_otherSM,
-            l_scaleVarIndex = l_scaleVarIndex,
-            suffix = suffix_mc,
-            histName_base = histName_base,
-            detailStr = detailStr_mc,
-            nRegion = nSR,
-            yieldBinNumber = finalYieldBin,
-            ll_regionNumber = ll_regionNumber_SR,
-            debug = debug,
-        )
+        d_syst_commonMC[systKey][label_DYJetsToLL][era] = systResult_DYJetsToLL
+        
+        if (systKey in l_syst_ttbar_toInclude) :
+            
+            d_syst_commonMC[systKey][label_ttbar][era] = systResult_ttbar
+        
+        d_syst_commonMC[systKey][label_otherSM][era] = systResult_otherSM
     
-    else :
+    
+    for systKey in d_syst_ttbar :
+        
+        if (d_syst_ttbar[systKey]["added"]) :
+            
+            continue
         
         systResult_ttbar = Common.getSystematics(
             l_rootFileDir = Details.cutFlowDir_ttbar[era],
@@ -687,8 +920,16 @@ for systKey in d_syst_commonMC :
             debug = debug,
         )
         
+        d_syst_ttbar[systKey][label_ttbar][era] = systResult_ttbar
+    
+    
+    for systKey in d_syst_DY :
         
-        systResult_DYJetsToLL = Common.getSystematics(
+        if (d_syst_DY[systKey]["added"]) :
+            
+            continue
+        
+        systResult_DY = Common.getSystematics(
             l_rootFileDir = Details.cutFlowDir_DYJetsToLL[era],
             rootFileName = rootFileName_mc,
             l_xs = Details.crossSection_DYJetsToLL[era],
@@ -702,339 +943,249 @@ for systKey in d_syst_commonMC :
             debug = debug,
         )
         
+        d_syst_DY[systKey][label_DYJetsToLL][era] = systResult_DY
+    
+    
+    for systKey in d_syst_fake :
         
-        systResult_otherSM = Common.getSystematics(
-            l_rootFileDir = details_otherSM,
-            rootFileName = rootFileName_mc,
-            l_xs = l_xs_otherSM,
-            suffix = suffix_mc,
+        if (d_syst_fake[systKey]["added"]) :
+            
+            continue
+        
+        systResult_fake = Common.getSystematics(
+            l_rootFileDir = Details.cutFlowDir_tauTau_fakeEstimation[era],
+            rootFileName = rootFileName_fakeEstimation,
+            l_xs = [],
+            suffix = suffix_fakeEstimation,
             systStr = systKey,
             histName_base = histName_base,
-            detailStr = detailStr_mc,
+            detailStr = detailStr_fakeEstimation,
             nRegion = nSR,
             yieldBinNumber = finalYieldBin,
             ll_regionNumber = ll_regionNumber_SR,
             debug = debug,
         )
-    
-    
-    d_syst_commonMC[systKey][label_DYJetsToLL] = systResult_DYJetsToLL
-    
-    if (systKey in l_syst_ttbar_toInclude) :
         
-        d_syst_commonMC[systKey][label_ttbar] = systResult_ttbar
+        d_syst_fake[systKey][label_fake][era] = systResult_fake
     
-    d_syst_commonMC[systKey][label_otherSM] = systResult_otherSM
-
-
-for systKey in d_syst_ttbar :
     
-    systResult_ttbar = Common.getSystematics(
-        l_rootFileDir = Details.cutFlowDir_ttbar[era],
-        rootFileName = rootFileName_mc,
+    # Data
+    d_yieldResult_data[era] = Common.getYields(
+        l_rootFile = d_inputFiles_data[era],
+        l_xs = [],
+        suffix = suffix_data,
+        systStr = "",
+        histName_base = histName_base,
+        detailStr = detailStr_data,
+        nRegion = nSR,
+        yieldBinNumber = finalYieldBin,
+        ll_regionNumber = ll_regionNumber_SR,
+        #scale = lumi_data,
+        negToZero = True,
+        debug = debug,
+    )
+    
+    
+    # Nominal
+    d_yieldResult_nominal_ttbar[era] = Common.getYields(
+        l_rootFile = d_inputFiles_ttbar[era],
         l_xs = Details.crossSection_ttbar[era],
         suffix = suffix_mc,
-        systStr = systKey,
+        systStr = "",
         histName_base = histName_base,
         detailStr = detailStr_mc,
         nRegion = nSR,
         yieldBinNumber = finalYieldBin,
         ll_regionNumber = ll_regionNumber_SR,
+        scale = d_lumi_data[era],
+        negToZero = True,
+        era = era,
         debug = debug,
     )
     
-    d_syst_ttbar[systKey][label_ttbar] = systResult_ttbar
-
-
-for systKey in d_syst_DY :
-    
-    systResult_DY = Common.getSystematics(
-        l_rootFileDir = Details.cutFlowDir_DYJetsToLL[era],
-        rootFileName = rootFileName_mc,
+    d_yieldResult_nominal_DYJetsToLL[era] = Common.getYields(
+        l_rootFile = d_inputFiles_DYJetsToLL[era],
         l_xs = Details.crossSection_DYJetsToLL[era],
         suffix = suffix_mc,
-        systStr = systKey,
+        systStr = "",
         histName_base = histName_base,
         detailStr = detailStr_mc,
         nRegion = nSR,
         yieldBinNumber = finalYieldBin,
         ll_regionNumber = ll_regionNumber_SR,
+        scale = d_lumi_data[era],
+        negToZero = True,
+        era = era,
         debug = debug,
     )
     
-    d_syst_DY[systKey][label_DYJetsToLL] = systResult_DY
-
-
-for systKey in d_syst_fake :
+    d_yieldResult_nominal_otherSM[era] = Common.getYields(
+        l_rootFile = d_inputFiles_otherSM[era],
+        l_xs = d_xs_otherSM[era],
+        suffix = suffix_mc,
+        systStr = "",
+        histName_base = histName_base,
+        detailStr = detailStr_mc,
+        nRegion = nSR,
+        yieldBinNumber = finalYieldBin,
+        ll_regionNumber = ll_regionNumber_SR,
+        scale = d_lumi_data[era],
+        negToZero = True,
+        era = era,
+        debug = debug,
+    )
     
-    systResult_fake = Common.getSystematics(
-        l_rootFileDir = Details.cutFlowDir_tauTau_fakeEstimation[era],
-        rootFileName = rootFileName_fakeEstimation,
+    d_yieldResult_nominal_fake[era] = Common.getYields(
+        l_rootFile = d_inputFiles_fake[era],
         l_xs = [],
-        suffix = suffix_fakeEstimation,
-        systStr = systKey,
+        suffix = suffix_mc,
+        systStr = "",
         histName_base = histName_base,
         detailStr = detailStr_fakeEstimation,
         nRegion = nSR,
         yieldBinNumber = finalYieldBin,
         ll_regionNumber = ll_regionNumber_SR,
+        scale = fakeScale,
+        negToZero = True,
         debug = debug,
     )
     
-    d_syst_fake[systKey][label_fake] = systResult_fake
-
-
-# Data
-yieldResult_data = Common.getYields(
-    l_rootFile = inputFiles_data,
-    l_xs = [],
-    suffix = suffix_data,
-    systStr = "",
-    histName_base = histName_base,
-    detailStr = detailStr_data,
-    nRegion = nSR,
-    yieldBinNumber = finalYieldBin,
-    ll_regionNumber = ll_regionNumber_SR,
-    #scale = lumi_data,
-    negToZero = True,
-    debug = debug,
-)
-
-
-# Nominal
-yieldResult_nominal_ttbar = Common.getYields(
-    l_rootFile = inputFiles_ttbar,
-    l_xs = Details.crossSection_ttbar[era],
-    suffix = suffix_mc,
-    systStr = "",
-    histName_base = histName_base,
-    detailStr = detailStr_mc,
-    nRegion = nSR,
-    yieldBinNumber = finalYieldBin,
-    ll_regionNumber = ll_regionNumber_SR,
-    scale = lumi_data,
-    negToZero = True,
-    era = era,
-    debug = debug,
-)
-
-yieldResult_nominal_DYJetsToLL = Common.getYields(
-    l_rootFile = inputFiles_DYJetsToLL,
-    l_xs = Details.crossSection_DYJetsToLL[era],
-    suffix = suffix_mc,
-    systStr = "",
-    histName_base = histName_base,
-    detailStr = detailStr_mc,
-    nRegion = nSR,
-    yieldBinNumber = finalYieldBin,
-    ll_regionNumber = ll_regionNumber_SR,
-    scale = lumi_data,
-    negToZero = True,
-    era = era,
-    debug = debug,
-)
-
-yieldResult_nominal_otherSM = Common.getYields(
-    l_rootFile = inputFiles_otherSM,
-    l_xs = l_xs_otherSM,
-    suffix = suffix_mc,
-    systStr = "",
-    histName_base = histName_base,
-    detailStr = detailStr_mc,
-    nRegion = nSR,
-    yieldBinNumber = finalYieldBin,
-    ll_regionNumber = ll_regionNumber_SR,
-    scale = lumi_data,
-    negToZero = True,
-    era = era,
-    debug = debug,
-)
-
-yieldResult_nominal_fake = Common.getYields(
-    l_rootFile = inputFiles_fake,
-    l_xs = [],
-    suffix = suffix_mc,
-    systStr = "",
-    histName_base = histName_base,
-    detailStr = detailStr_fakeEstimation,
-    nRegion = nSR,
-    yieldBinNumber = finalYieldBin,
-    ll_regionNumber = ll_regionNumber_SR,
-    scale = fakeScale,
-    negToZero = True,
-    debug = debug,
-)
-
-
-# ttbar SF
-ttbarSFinfo_elMu = Common.getTTbarSF_multibin(
-    cutFlowNameBase = histName_base_ttbarCR,
-    inputFiles_data = inputFiles_data_ttbarCR_elMu,
-    lumi_data = lumi_data_TTCR,
-    label_data = "data",
-    details_data = detailStr_ttbarCR,
-    inputFiles_mc = d_info_mc_ttbarCR_elMu["files"],
-    crossSections_mc = d_info_mc_ttbarCR_elMu["xs"],
-    labels_mc = d_info_mc_ttbarCR_elMu["labels"],
-    details_mc = detailStr_ttbarCR,
-    ll_regionNumber = ll_regionNumber_ttbarCR,
-    debug = debug,
-)
-
-ttbarSFinfo_muMu = Common.getTTbarSF_multibin(
-    cutFlowNameBase = histName_base_ttbarCR,
-    inputFiles_data = inputFiles_data_ttbarCR_muMu,
-    lumi_data = lumi_data_TTCR,
-    label_data = "data",
-    details_data = detailStr_ttbarCR,
-    inputFiles_mc = d_info_mc_ttbarCR_muMu["files"],
-    crossSections_mc = d_info_mc_ttbarCR_muMu["xs"],
-    labels_mc = d_info_mc_ttbarCR_muMu["labels"],
-    details_mc = detailStr_ttbarCR,
-    ll_regionNumber = ll_regionNumber_ttbarCR,
-    debug = debug,
-)
-
-l_ttbarSF_elMu = ttbarSFinfo_elMu["SF"]
-l_ttbarSF_muMu = ttbarSFinfo_muMu["SF"]
-
-l_ttbarSF_err_elMu = ttbarSFinfo_elMu["SFerr"]
-l_ttbarSF_err_muMu = ttbarSFinfo_muMu["SFerr"]
-
-l_ttbarSF = [(l_ttbarSF_elMu[iEle] + l_ttbarSF_muMu[iEle]) / 2.0 for iEle in range(0, len(l_ttbarSF_elMu))]
-
-# Difference between elMu and muMu
-l_ttbarSF_err = [abs(l_ttbarSF_elMu[iEle]-l_ttbarSF[iEle]) for iEle in range(0, len(l_ttbarSF_elMu))]
-
-#print "XXXXX", l_ttbarSF_err_elMu
-#print "YYYYY", l_ttbarSF_err_muMu
-#print "ZZZZZ", l_ttbarSF_err
-
-# Add the stat error in quadrature
-l_ttbarSF_err = [numpy.sqrt(l_ttbarSF_err[iEle]**2 + (l_ttbarSF_err_elMu[iEle]**2 + l_ttbarSF_err_muMu[iEle]**2)/4.0) for iEle in range(0, len(l_ttbarSF_elMu))]
-
-#print "FFFFF", l_ttbarSF_err
-
-# To percentage
-l_ttbarSF_err = [(l_ttbarSF_err[iEle] / l_ttbarSF[iEle] * 100.0) for iEle in range(0, len(l_ttbarSF))]
-
-#print "PPPPP", l_ttbarSF_err
-
-# Apply ttbar SF
-l_ttbarSF_temp = []
-l_ttbarSF_err_temp = []
-
-for iRegionGroup in range (0, nSR_merged) :
     
-    ttbarSF_temp = 0
-    ttbarSF_err_temp = 0
+    # ttbar SF
+    ttbarSFinfo_elMu = Common.getTTbarSF_multibin(
+        cutFlowNameBase = histName_base_ttbarCR,
+        inputFiles_data = d_inputFiles_data_ttbarCR_elMu[era],
+        lumi_data = d_lumi_data_TTCR[era],
+        label_data = "data",
+        details_data = detailStr_ttbarCR,
+        inputFiles_mc = d_info_mc_ttbarCR_elMu[era]["files"],
+        crossSections_mc = d_info_mc_ttbarCR_elMu[era]["xs"],
+        labels_mc = d_info_mc_ttbarCR_elMu[era]["labels"],
+        details_mc = detailStr_ttbarCR,
+        ll_regionNumber = ll_regionNumber_ttbarCR,
+        debug = debug,
+    )
     
-    for iRegion in range(0, len(ll_regionNumber_SR[iRegionGroup])) :
+    ttbarSFinfo_muMu = Common.getTTbarSF_multibin(
+        cutFlowNameBase = histName_base_ttbarCR,
+        inputFiles_data = d_inputFiles_data_ttbarCR_muMu[era],
+        lumi_data = d_lumi_data_TTCR[era],
+        label_data = "data",
+        details_data = detailStr_ttbarCR,
+        inputFiles_mc = d_info_mc_ttbarCR_muMu[era]["files"],
+        crossSections_mc = d_info_mc_ttbarCR_muMu[era]["xs"],
+        labels_mc = d_info_mc_ttbarCR_muMu[era]["labels"],
+        details_mc = detailStr_ttbarCR,
+        ll_regionNumber = ll_regionNumber_ttbarCR,
+        debug = debug,
+    )
+    
+    l_ttbarSF_elMu = ttbarSFinfo_elMu["SF"]
+    l_ttbarSF_muMu = ttbarSFinfo_muMu["SF"]
+    
+    l_ttbarSF_err_elMu = ttbarSFinfo_elMu["SFerr"]
+    l_ttbarSF_err_muMu = ttbarSFinfo_muMu["SFerr"]
+    
+    l_ttbarSF = [(l_ttbarSF_elMu[iEle] + l_ttbarSF_muMu[iEle]) / 2.0 for iEle in range(0, len(l_ttbarSF_elMu))]
+    
+    # Difference between elMu and muMu
+    l_ttbarSF_err = [abs(l_ttbarSF_elMu[iEle]-l_ttbarSF[iEle]) for iEle in range(0, len(l_ttbarSF_elMu))]
+    
+    #print "XXXXX", l_ttbarSF_err_elMu
+    #print "YYYYY", l_ttbarSF_err_muMu
+    #print "ZZZZZ", l_ttbarSF_err
+    
+    # Add the stat error in quadrature
+    l_ttbarSF_err = [numpy.sqrt(l_ttbarSF_err[iEle]**2 + (l_ttbarSF_err_elMu[iEle]**2 + l_ttbarSF_err_muMu[iEle]**2)/4.0) for iEle in range(0, len(l_ttbarSF_elMu))]
+    
+    #print "FFFFF", l_ttbarSF_err
+    
+    # To percentage
+    l_ttbarSF_err = [(l_ttbarSF_err[iEle] / l_ttbarSF[iEle] * 100.0) for iEle in range(0, len(l_ttbarSF))]
+    
+    #print "PPPPP", l_ttbarSF_err
+    
+    # Apply ttbar SF
+    l_ttbarSF_temp = []
+    l_ttbarSF_err_temp = []
+    
+    for iRegionGroup in range (0, nSR_merged) :
         
-        regionNumber = ll_regionNumber_SR[iRegionGroup][iRegion]
+        ttbarSF_temp = 0
+        ttbarSF_err_temp = 0
         
-        ttbarSF_temp += l_ttbarSF[regionNumber-1]
-        ttbarSF_err_temp += l_ttbarSF_err[regionNumber-1]
+        for iRegion in range(0, len(ll_regionNumber_SR[iRegionGroup])) :
+            
+            regionNumber = ll_regionNumber_SR[iRegionGroup][iRegion]
+            
+            ttbarSF_temp += l_ttbarSF[regionNumber-1]
+            ttbarSF_err_temp += l_ttbarSF_err[regionNumber-1]
+        
+        ttbarSF_temp /= len(ll_regionNumber_SR[iRegionGroup])
+        ttbarSF_err_temp /= len(ll_regionNumber_SR[iRegionGroup])
+        
+        l_ttbarSF_temp.append(ttbarSF_temp)
+        l_ttbarSF_err_temp.append(ttbarSF_err_temp)
+        
+        d_yieldResult_nominal_ttbar[era]["yield"][iRegionGroup] *= ttbarSF_temp
+        d_yieldResult_nominal_ttbar[era]["error"][iRegionGroup] *= ttbarSF_temp
     
-    ttbarSF_temp /= len(ll_regionNumber_SR[iRegionGroup])
-    ttbarSF_err_temp /= len(ll_regionNumber_SR[iRegionGroup])
+    d_yieldResult_nominal_ttbar[era]["integral"] = sum(d_yieldResult_nominal_ttbar[era]["yield"])
     
-    l_ttbarSF_temp.append(ttbarSF_temp)
-    l_ttbarSF_err_temp.append(ttbarSF_err_temp)
+    l_ttbarSF = l_ttbarSF_temp
+    l_ttbarSF_err = l_ttbarSF_err_temp
     
-    yieldResult_nominal_ttbar["yield"][iRegionGroup] *= ttbarSF_temp
-
-l_ttbarSF = l_ttbarSF_temp
-l_ttbarSF_err = l_ttbarSF_err_temp
-
-# Weighted average
-ttbarF_err_mean = numpy.average(l_ttbarSF_err, weights = yieldResult_nominal_ttbar["yield"])
-
-d_syst_ttbar["ttbarSF"] = {
-    "latexTitle": r"$ \ttbar $ SF",
-    "type": "lnN",
-    "correlated": False,
+    # Weighted average
+    ttbarF_err_mean = numpy.average(l_ttbarSF_err, weights = d_yieldResult_nominal_ttbar[era]["yield"])
     
-    label_ttbar: {
+    d_syst_ttbar["ttbarSF"][label_ttbar][era] = {
         "syst": l_ttbarSF_err,
         "syst_mean": ttbarF_err_mean,
         "integral_syst": ttbarF_err_mean,
     }
-}
-
-
-# Luminosity
-lumi_err = Details.luminosity_unc_data[era]
-l_lumi_err = [lumi_err]*nSR_merged
-
-
-d_syst_commonMC["luminosity"] = {
-    "latexTitle": r"Luminosity",
-    "type": "lnN",
-    "added": True,
-    "correlated": False,
     
-    label_sig: {
+    
+    # Luminosity
+    lumi_err = Details.luminosity_unc_data[era]
+    l_lumi_err = [lumi_err]*nSR_merged
+    
+    
+    d_syst_commonMC["luminosity"][label_sig][era] = {
         "syst": l_lumi_err,
         "syst_mean": lumi_err,
         "integral_syst": lumi_err,
-    },
+    }
     
-    #label_ttbar: {
-    #    "syst": l_lumi_err,
-    #    "syst_mean": lumi_err,
-    #    "integral_syst": lumi_err,
-    #},
-    
-    label_DYJetsToLL: {
+    d_syst_commonMC["luminosity"][label_DYJetsToLL][era] = {
         "syst": l_lumi_err,
         "syst_mean": lumi_err,
         "integral_syst": lumi_err,
-    },
+    }
     
-    label_otherSM: {
+    d_syst_commonMC["luminosity"][label_otherSM][era] = {
         "syst": l_lumi_err,
         "syst_mean": lumi_err,
         "integral_syst": lumi_err,
-    },
-}
-
-
-# TEST!!!
-# Flat normalization uncertainty
-norm_err = 15.0
-l_norm_err = [norm_err]*nSR_merged
-
-d_syst_commonMC["normalization"] = {
-    "latexTitle": r"Background normalization",
-    "type": "lnN",
-    "added": True,
-    "correlated": True,
+    }
     
-    #label_sig: {
-    #    "syst": [0.0]*nSR_merged,
-    #    "syst_mean": 0.0,
-    #    "integral_syst": 0.0,
-    #},
     
-    #label_ttbar: {
-    #    "syst": l_norm_err,
-    #    "syst_mean": norm_err,
-    #    "integral_syst": norm_err,
-    #},
+    # TEST!!!
+    # Flat normalization uncertainty
+    norm_err = 15.0
+    l_norm_err = [norm_err]*nSR_merged
     
-    label_DYJetsToLL: {
+    d_syst_commonMC["normalization"][label_DYJetsToLL][era] = {
         "syst": l_norm_err,
         "syst_mean": norm_err,
         "integral_syst": norm_err,
-    },
+    }
     
-    label_otherSM: {
+    d_syst_commonMC["normalization"][label_otherSM][era] = {
         "syst": l_norm_err,
         "syst_mean": norm_err,
         "integral_syst": norm_err,
-    },
-}
+    }
+    
 
 
 #print "\n\n%s\n" %("*"*50)
@@ -1049,34 +1200,49 @@ d_syst_commonMC["normalization"] = {
 
 
 ##################################################
-# Got info for the background
+# Got info for data and background
 ##################################################
 
 
 d_systCombined = {
     label_ttbar: {
-        "stat": [0]*nSR_merged,
-        "syst": [[] for ele in range(0, nSR_merged)],
+        "stat": [[] for ele in range(0, nSR_merged)],
+        "syst": [[] for ele in range(0, nSR_merged)], #[systName, errUp, errDown]
     },
     
     label_DYJetsToLL: {
-        "stat": [0]*nSR_merged,
+        "stat": [[] for ele in range(0, nSR_merged)],
         "syst": [[] for ele in range(0, nSR_merged)],
     },
     
     label_otherSM: {
-        "stat": [0]*nSR_merged,
+        "stat": [[] for ele in range(0, nSR_merged)],
         "syst": [[] for ele in range(0, nSR_merged)],
     },
     
     label_fake: {
-        "stat": [0]*nSR_merged,
+        "stat": [[] for ele in range(0, nSR_merged)],
         "syst": [[] for ele in range(0, nSR_merged)],
     },
 }
 
 
+#d_systCombined = {}
 d_systCombined_sig = {}
+
+
+#for iEra in range(0, len(l_era)):
+#    
+#    era = l_era[iEra]
+#    #eraStr = "_%s" %(era)
+#    #
+#    #d_systCombined[label_ttbar+eraStr] = copy.deepcopy(d_systCombined[label_ttbar])
+#    #d_systCombined[label_DYJetsToLL+eraStr] = copy.deepcopy(d_systCombined[label_DYJetsToLL])
+#    #d_systCombined[label_otherSM+eraStr] = copy.deepcopy(d_systCombined[label_otherSM])
+#    #d_systCombined[label_fake+eraStr] = copy.deepcopy(d_systCombined[label_fake])
+#    
+#    d_systCombined[era] = copy.deepcopy(d_systCombined_temp)
+#    d_systCombined_sig[era] = {}
 
 
 def writeCard(
@@ -1268,12 +1434,14 @@ def fillStatError(
     iBin,
     era,
     isFake = False,
+    scale = 1.0,
     ) :
     
     nBefore = iBin*nProcess + iProcess
     nAfter = nBin*nProcess - nBefore - 1
     
-    if (d_info["yield"][iBin] == 0 and not isFake) :
+    #if (d_info["yield"][iBin] == 0 and not isFake) :
+    if (d_info["yield"][iBin] == 0) :
         
         #statName = "zerostat%s_%s_%s%d" %(era, processLabel, binLabel, iBin+1)
         statName = "stat%s_%s_%s%d" %(era, processLabel, binLabel, iBin+1)
@@ -1289,98 +1457,239 @@ def fillStatError(
         d_out[statName] = [statName, "lnN"]
         
         d_out[statName].extend(["-"] * nBefore)
-        d_out[statName].append("%0.4e" %(1+Common.getRelativeError(val = d_info["yield"][iBin], err = d_info["error"][iBin])))
+        d_out[statName].append("%0.4e" %(1 + scale*Common.getRelativeError(val = d_info["yield"][iBin], err = d_info["error"][iBin])))
         d_out[statName].extend(["-"] * nAfter)
         
-        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_ttbar["yield"][iSR], err = yieldResult_nominal_ttbar["error"][iSR])))
+        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = d_yieldResult_nominal_ttbar[era]["yield"][iSR], err = d_yieldResult_nominal_ttbar[era]["error"][iSR])))
 
 
-for iMass in range(0, massPointInfo.shape[0]) :
+
+for iEra in range(0, len(l_era)):
     
-    d_block_data = copy.deepcopy(d_block_data_template)
-    d_block_mc = copy.deepcopy(d_block_mc_template)
-    d_block_statErr = copy.deepcopy(d_block_statErr_template)
-    d_block_err = copy.deepcopy(d_block_err_template)
+    era = l_era[iEra]
+    eraStr = "_%s" %(era)
     
+    process_sig = d_process_sig[era][args.xVal]
+    massPointInfo = d_massPointInfo[era]
     
-    stop1_m = massPointInfo[iMass, 0]
-    neutralino1_m = massPointInfo[iMass, 1]
-    xs_sig = massPointInfo[iMass, 3]
-    xsUnc_sig = massPointInfo[iMass, 4]
-    
-    suffix_sig = suffix_mc
-    cutFlowDir_sig = "stopPair_mc/output_analyzed/" + process_sig
-    inputFiles_sig = Common.getRootFiles([cutFlowDir_sig], suffix_sig, rootFileName_mc)
-    
-    suffix_sig_genMET = suffix_mc + "_withGenMET"
-    cutFlowDir_sig_genMET = "stopPair_mc/output_analyzed/" + process_sig
-    inputFiles_sig_genMET = Common.getRootFiles([cutFlowDir_sig_genMET], suffix_sig_genMET, rootFileName_mc)
-    
-    # Using 2016 signal, but need to create separate directory for 2017
-    process_sig_mod = process_sig
-    
-    if (era == "2017") :
+    for iMass in range(0, massPointInfo.shape[0]) :
         
-        process_sig_mod = process_sig.replace("Summer16", "Fall17")
-    
-    combineOutputDir = "stopPair_mc/output_combine/" + process_sig_mod + suffix_mc
-    command = "mkdir -p " + combineOutputDir
-    os.system(command)
-    
-    detailStr_sig = "%s_%d_%d" %(detailStr_mc, int(stop1_m), int(neutralino1_m))
-    
-    
-    ##### Signal systematics #####
-    
-    # Signal xs uncertainty
-    # Only for systematics table
-    if (args.syst) :
+        d_block_data = copy.deepcopy(d_block_data_template)
+        d_block_mc = copy.deepcopy(d_block_mc_template)
+        d_block_statErr = copy.deepcopy(d_block_statErr_template)
+        d_block_err = copy.deepcopy(d_block_err_template)
         
-        d_syst_sig["sigXS"] = {
-            "latexTitle": r"Signal cross-section",
-            "type": "lnN",
-            "added": True,
-            "correlated": True,
+        
+        stop1_m = massPointInfo[iMass, 0]
+        neutralino1_m = massPointInfo[iMass, 1]
+        xs_sig = massPointInfo[iMass, 3]
+        xsUnc_sig = massPointInfo[iMass, 4]
+        
+        suffix_sig = suffix_mc
+        cutFlowDir_sig = "stopPair_mc/output_analyzed/" + process_sig
+        inputFiles_sig = Common.getRootFiles([cutFlowDir_sig], suffix_sig, rootFileName_mc)
+        
+        suffix_sig_genMET = suffix_mc + "_withGenMET"*(not args.noSigGenMET)
+        cutFlowDir_sig_genMET = "stopPair_mc/output_analyzed/" + process_sig
+        inputFiles_sig_genMET = Common.getRootFiles([cutFlowDir_sig_genMET], suffix_sig_genMET, rootFileName_mc)
+        
+        process_sig_mod = process_sig
+        
+        # Using 2016 signal, but need to create separate directory for 2017
+        #if (era == "2017") :
+        #    
+        #    process_sig_mod = process_sig.replace("Summer16", "Fall17")
+        
+        combineOutputDir = "stopPair_mc/output_combine/" + process_sig_mod + suffix_mc + args.cardSuffix
+        command = "mkdir -p " + combineOutputDir
+        os.system(command)
+        
+        detailStr_sig = "%s_%d_%d" %(detailStr_mc, int(stop1_m), int(neutralino1_m))
+        
+        
+        ##### Signal systematics #####
+        
+        # Signal xs uncertainty
+        # Only for systematics table
+        if (args.syst) :
             
-            label_sig: {
+            if ("sigXS" not in d_syst_sig) :
+                
+                d_syst_sig["sigXS"] = {
+                    "latexTitle": r"Signal cross section",
+                    "type": "lnN",
+                    "added": True,
+                    "correlated": True,
+                    label_sig: {},
+                }
+            
+            d_syst_sig["sigXS"][label_sig][era] = {
                 "syst": [xsUnc_sig]*nSR_merged,
                 "syst_mean": xsUnc_sig,
                 "integral_syst": xsUnc_sig,
-            },
-        }
-    
-    # Common systematics
-    for systKey in d_syst_commonMC :
+            }
         
-        if (systKey in l_syst_sig_toExclude) :
+        # Common systematics
+        for systKey in d_syst_commonMC :
             
-            continue
-        
-        if (d_syst_commonMC[systKey]["added"]) :
+            if (systKey in l_syst_sig_toExclude) :
+                
+                continue
+            
+            if (d_syst_commonMC[systKey]["added"]) :
+                
+                if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                    
+                    sigKey = (int(stop1_m), int(neutralino1_m))
+                    
+                    if (systKey not in d_massPointSystTable[sigKey]) :
+                        
+                        d_massPointSystTable[sigKey][systKey] = {}
+                    
+                    d_massPointSystTable[sigKey][systKey][era] = d_syst_commonMC[systKey][label_sig][era]
+                
+                continue
+            
+            if (systKey == "scale") :
+                
+                systResult_sig = Common.getScaleUncertainty(
+                    l_rootFileDir = [cutFlowDir_sig],
+                    rootFileName = rootFileName_mc,
+                    l_xs = [xs_sig],
+                    l_scaleVarIndex = l_scaleVarIndex,
+                    suffix = suffix_sig,
+                    histName_base = histName_base,
+                    detailStr = detailStr_sig,
+                    nRegion = nSR,
+                    yieldBinNumber = finalYieldBin,
+                    ll_regionNumber = ll_regionNumber_SR,
+                    debug = debug,
+                )
+            
+            else :
+                
+                systResult_sig = Common.getSystematics(
+                    l_rootFileDir = [cutFlowDir_sig],
+                    rootFileName = rootFileName_mc,
+                    l_xs = [xs_sig],
+                    suffix = suffix_sig,
+                    systStr = systKey,
+                    histName_base = histName_base,
+                    detailStr = detailStr_sig,
+                    nRegion = nSR,
+                    yieldBinNumber = finalYieldBin,
+                    ll_regionNumber = ll_regionNumber_SR,
+                    debug = debug,
+                )
+            
+            d_syst_commonMC[systKey][label_sig][era] = systResult_sig
             
             if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
                 
-                d_massPointSystTable[(int(stop1_m), int(neutralino1_m))][systKey] = d_syst_commonMC[systKey][label_sig]
-            
-            continue
+                sigKey = (int(stop1_m), int(neutralino1_m))
+                
+                if (systKey not in d_massPointSystTable[sigKey]) :
+                    
+                    d_massPointSystTable[sigKey][systKey] = {}
+                
+                d_massPointSystTable[sigKey][systKey][era] = systResult_sig
         
-        if (systKey == "scale") :
-            
-            systResult_sig = Common.getScaleUncertainty(
-                l_rootFileDir = [cutFlowDir_sig],
-                rootFileName = rootFileName_mc,
-                l_xs = [xs_sig],
-                l_scaleVarIndex = l_scaleVarIndex,
-                suffix = suffix_sig,
-                histName_base = histName_base,
-                detailStr = detailStr_sig,
-                nRegion = nSR,
-                yieldBinNumber = finalYieldBin,
-                ll_regionNumber = ll_regionNumber_SR,
-                debug = debug,
-            )
         
-        else :
+         # Signal nominal
+        yieldResult_nominal_sig = Common.getYields(
+            l_rootFile = inputFiles_sig,
+            l_xs = [xs_sig],
+            suffix = suffix_sig,
+            systStr = "",
+            histName_base = histName_base,
+            detailStr = detailStr_sig,
+            nRegion = nSR,
+            yieldBinNumber = finalYieldBin,
+            l_rootFile_sig_genMET = inputFiles_sig_genMET,
+            ll_regionNumber = ll_regionNumber_SR,
+            scale = d_lumi_data[era],
+            debug = debug,
+        )
+        
+        # Signal yields with GEN-MET
+        yieldResult_nominal_sig_genMET= Common.getYields(
+            l_rootFile = inputFiles_sig_genMET,
+            l_xs = [xs_sig],
+            suffix = suffix_sig_genMET,
+            systStr = "",
+            histName_base = histName_base,
+            detailStr = detailStr_sig,
+            nRegion = nSR,
+            yieldBinNumber = finalYieldBin,
+            ll_regionNumber = ll_regionNumber_SR,
+            scale = d_lumi_data[era],
+            debug = debug,
+        )
+        
+        l_syst_temp = []
+        syst_mean_temp = 0
+        integral_temp = 0
+        
+        for iSR in range(0, nSR_merged) :
+            
+            #yield_temp = (yieldResult_nominal_sig["yield"][iSR] + yieldResult_nominal_sig_genMET["yield"][iSR]) / 2.0
+            yield_temp = yieldResult_nominal_sig["yield"][iSR]
+            
+            syst_temp = abs(yield_temp - yieldResult_nominal_sig_genMET["yield"][iSR])
+            
+            systPercent_temp = 0
+            
+            if (yield_temp) :
+                
+                systPercent_temp = syst_temp / yield_temp * 100.0
+            
+            if (systPercent_temp == -100) :
+                
+                systPercent_temp = (1e-4 - 1) * 100
+            
+            integral_temp += yield_temp
+            syst_mean_temp += systPercent_temp * yield_temp
+            
+            l_syst_temp.append(systPercent_temp)
+        
+        if (integral_temp) :
+            
+            syst_mean_temp /= integral_temp
+        
+        
+        if ("sigMET" not in d_syst_sig) :
+            
+            d_syst_sig["sigMET"] = {
+                "latexTitle": r"\textsc{FastSim} $ \ptmiss $ resolution",
+                "type": "lnN",
+                "added": True,
+                "correlated": True,
+                label_sig: {},
+            }
+        
+        d_syst_sig["sigMET"][label_sig][era] = {
+            "syst": l_syst_temp,
+            "syst_mean": syst_mean_temp,
+            "integral_syst": syst_mean_temp,
+        }
+        
+        
+        # Signal specific systematics
+        for systKey in d_syst_sig :
+            
+            if (d_syst_sig[systKey]["added"]) :
+                
+                if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                    
+                    sigKey = (int(stop1_m), int(neutralino1_m))
+                    
+                    if (systKey not in d_massPointSystTable[sigKey]) :
+                        
+                        d_massPointSystTable[sigKey][systKey] = {}
+                    
+                    d_massPointSystTable[sigKey][systKey][era] = d_syst_sig[systKey][label_sig][era]
+                
+                continue
             
             systResult_sig = Common.getSystematics(
                 l_rootFileDir = [cutFlowDir_sig],
@@ -1395,721 +1704,670 @@ for iMass in range(0, massPointInfo.shape[0]) :
                 ll_regionNumber = ll_regionNumber_SR,
                 debug = debug,
             )
-        
-        d_syst_commonMC[systKey][label_sig] = systResult_sig
-        
-        if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
             
-            d_massPointSystTable[(int(stop1_m), int(neutralino1_m))][systKey] = systResult_sig
-    
-    
-    # Signal specific systematics
-    for systKey in d_syst_sig :
-        
-        if (d_syst_sig[systKey]["added"]) :
+            d_syst_sig[systKey][label_sig][era] = systResult_sig
             
             if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
                 
-                d_massPointSystTable[(int(stop1_m), int(neutralino1_m))][systKey] = d_syst_sig[systKey][label_sig]
-            
-            continue
+                sigKey = (int(stop1_m), int(neutralino1_m))
+                
+                if (systKey not in d_massPointSystTable[sigKey]) :
+                    
+                    d_massPointSystTable[sigKey][systKey] = {}
+                
+                d_massPointSystTable[sigKey][systKey][era] = systResult_sig
         
-        systResult_sig = Common.getSystematics(
-            l_rootFileDir = [cutFlowDir_sig],
-            rootFileName = rootFileName_mc,
-            l_xs = [xs_sig],
-            suffix = suffix_sig,
-            systStr = systKey,
-            histName_base = histName_base,
-            detailStr = detailStr_sig,
-            nRegion = nSR,
-            yieldBinNumber = finalYieldBin,
-            ll_regionNumber = ll_regionNumber_SR,
-            debug = debug,
-        )
         
-        d_syst_sig[systKey][label_sig] = systResult_sig
+        sigKey = (int(stop1_m), int(neutralino1_m))
         
         if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
             
-            d_massPointSystTable[(int(stop1_m), int(neutralino1_m))][systKey] = systResult_sig
-    
-    
-    
-    # Signal nominal
-    yieldResult_nominal_sig = Common.getYields(
-        l_rootFile = inputFiles_sig,
-        l_xs = [xs_sig],
-        suffix = suffix_sig,
-        systStr = "",
-        histName_base = histName_base,
-        detailStr = detailStr_sig,
-        nRegion = nSR,
-        yieldBinNumber = finalYieldBin,
-        l_rootFile_sig_genMET = inputFiles_sig_genMET,
-        ll_regionNumber = ll_regionNumber_SR,
-        scale = lumi_data,
-        debug = debug,
-    )
-    
-    # Signal yields with GEN-MET
-    yieldResult_nominal_sig_genMET= Common.getYields(
-        l_rootFile = inputFiles_sig_genMET,
-        l_xs = [xs_sig],
-        suffix = suffix_sig_genMET,
-        systStr = "",
-        histName_base = histName_base,
-        detailStr = detailStr_sig,
-        nRegion = nSR,
-        yieldBinNumber = finalYieldBin,
-        ll_regionNumber = ll_regionNumber_SR,
-        scale = lumi_data,
-        debug = debug,
-    )
-    
-    l_syst_temp = []
-    syst_mean_temp = 0
-    integral_temp = 0
-    
-    for iSR in range(0, nSR_merged) :
-        
-        #yield_temp = (yieldResult_nominal_sig["yield"][iSR] + yieldResult_nominal_sig_genMET["yield"][iSR]) / 2.0
-        yield_temp = yieldResult_nominal_sig["yield"][iSR]
-        
-        syst_temp = abs(yield_temp - yieldResult_nominal_sig_genMET["yield"][iSR])
-        
-        systPercent_temp = 0
-        
-        if (yield_temp) :
+            # Key must be immutable
+            # Use tuple
+            sigKey = (int(stop1_m), int(neutralino1_m))
             
-            systPercent_temp = syst_temp / yield_temp * 100.0
-        
-        if (systPercent_temp == -100) :
+            d_massPointYieldHist[sigKey][era] = yieldResult_nominal_sig
             
-            systPercent_temp = (1e-4 - 1) * 100
-        
-        integral_temp += yield_temp
-        syst_mean_temp += systPercent_temp * yield_temp
-        
-        l_syst_temp.append(systPercent_temp)
-    
-    if (integral_temp) :
-        
-        syst_mean_temp /= integral_temp
-    
-    
-    d_syst_sig["sigMET"] = {
-        "latexTitle": r"FastSim $ \ptmiss $ resolution",
-        "type": "lnN",
-        "added": True,
-        "correlated": True,
-        
-        label_sig: {
-            "syst": l_syst_temp,
-            "syst_mean": syst_mean_temp,
-            "integral_syst": syst_mean_temp,
-        },
-    }
-    
-    
-    sigKey = (int(stop1_m), int(neutralino1_m))
-    
-    if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
-        
-        # Key must be immutable
-        # Use tuple
-        d_massPointYieldHist[(int(stop1_m), int(neutralino1_m))] = yieldResult_nominal_sig
-        d_massPointSystTable[(int(stop1_m), int(neutralino1_m))]["sigMET"] = d_syst_sig["sigMET"][label_sig]
-        
-        
-        if (label_sig not in d_systCombined_sig) :
+            if ("sigMET" not in d_massPointSystTable[sigKey]) :
+                
+                d_massPointSystTable[sigKey]["sigMET"] = {}
             
-            d_systCombined_sig[sigKey] = {
-                "stat": [0]*nSR_merged,
-                "syst": [[] for ele in range(0, nSR_merged)],
-            }
-    
-    
-    # Datacard name
-    combineDatacard_name_mod = combineDatacard_name
-    combineDatacard_name_mod = combineDatacard_name_mod.replace("@stop1_m@", str(int(stop1_m)))
-    combineDatacard_name_mod = combineDatacard_name_mod.replace("@neutralino1_m@", str(int(neutralino1_m)))
-    
-    if (args.pseudodataSB) :
-        
-        combineDatacard_name_mod = combineDatacard_name_mod.replace(".txt", "_pseudodataSB.txt")
-    
-    elif (args.pseudodataB) :
-        
-        combineDatacard_name_mod = combineDatacard_name_mod.replace(".txt", "_pseudodataB.txt")
-    
-    # Output file name
-    combineOutput_name_mod = combineOutput_name
-    combineOutput_name_mod = combineOutput_name_mod.replace("@stop1_m@", str(int(stop1_m)))
-    combineOutput_name_mod = combineOutput_name_mod.replace("@neutralino1_m@", str(int(neutralino1_m)))
-    
-    # Datacard content
-    combineDatacard_content_mod = combineDatacard_content
-    
-    binLabels = []
-    
-    for iSR in range(0, nSR_merged) :
-        
-        if (args.cardPerBin) :
+            d_massPointSystTable[sigKey]["sigMET"][era] = d_syst_sig["sigMET"][label_sig][era]
             
-            d_block_data = copy.deepcopy(d_block_data_template)
-            d_block_mc = copy.deepcopy(d_block_mc_template)
-            d_block_statErr = copy.deepcopy(d_block_statErr_template)
-            d_block_err = copy.deepcopy(d_block_err_template)
-        
-        binLabel = cutFlowNameBase + str(int(iSR+1))
-        binLabels.append(binLabel)
-        
-        processIndex = -1
+            
+            if (sigKey not in d_systCombined_sig) :
+                
+                d_systCombined_sig[sigKey] = {
+                    "stat": [[] for ele in range(0, nSR_merged)],
+                    "syst": [[] for ele in range(0, nSR_merged)],
+                }
         
         
-        d_block_data["bin"].append(binLabel)
+        # Datacard name
+        combineDatacard_name_mod = combineDatacard_name
+        combineDatacard_name_mod = combineDatacard_name_mod.replace("@stop1_m@", str(int(stop1_m)))
+        combineDatacard_name_mod = combineDatacard_name_mod.replace("@neutralino1_m@", str(int(neutralino1_m)))
         
         if (args.pseudodataSB) :
             
-            pseudodata_val = (
-                Common.replaceZero(yieldResult_nominal_sig["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_ttbar["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_DYJetsToLL["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_otherSM["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_fake["yield"][iSR], zeroReplacement)
-            )
-            
-            d_block_data["observation"].append("%0.4e" %(pseudodata_val))
+            combineDatacard_name_mod = combineDatacard_name_mod.replace(".txt", "_pseudodataSB.txt")
         
         elif (args.pseudodataB) :
             
-            pseudodata_val = (
-                Common.replaceZero(yieldResult_nominal_ttbar["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_DYJetsToLL["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_otherSM["yield"][iSR], zeroReplacement) +
-                Common.replaceZero(yieldResult_nominal_fake["yield"][iSR], zeroReplacement)
+            combineDatacard_name_mod = combineDatacard_name_mod.replace(".txt", "_pseudodataB.txt")
+        
+        # Output file name
+        combineOutput_name_mod = combineOutput_name
+        combineOutput_name_mod = combineOutput_name_mod.replace("@stop1_m@", str(int(stop1_m)))
+        combineOutput_name_mod = combineOutput_name_mod.replace("@neutralino1_m@", str(int(neutralino1_m)))
+        
+        # Datacard content
+        combineDatacard_content_mod = combineDatacard_content
+        
+        binLabels = []
+        
+        for iSR in range(0, nSR_merged) :
+            
+            if (args.cardPerBin) :
+                
+                d_block_data = copy.deepcopy(d_block_data_template)
+                d_block_mc = copy.deepcopy(d_block_mc_template)
+                d_block_statErr = copy.deepcopy(d_block_statErr_template)
+                d_block_err = copy.deepcopy(d_block_err_template)
+            
+            binLabel = cutFlowNameBase + str(int(iSR+1))
+            binLabels.append(binLabel)
+            
+            processIndex = -1
+            
+            
+            d_block_data["bin"].append(binLabel)
+            
+            if (args.pseudodataSB) :
+                
+                pseudodata_val = (
+                    Common.replaceZero(yieldResult_nominal_sig["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_ttbar[era]["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_otherSM[era]["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_fake[era]["yield"][iSR], zeroReplacement)
+                )
+                
+                d_block_data["observation"].append("%0.4e" %(pseudodata_val))
+            
+            elif (args.pseudodataB) :
+                
+                pseudodata_val = (
+                    Common.replaceZero(d_yieldResult_nominal_ttbar[era]["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_otherSM[era]["yield"][iSR], zeroReplacement) +
+                    Common.replaceZero(d_yieldResult_nominal_fake[era]["yield"][iSR], zeroReplacement)
+                )
+                
+                d_block_data["observation"].append("%0.4e" %(pseudodata_val))
+            
+            else :
+                
+                d_block_data["observation"].append("%d" %(d_yieldResult_data[era]["yield"][iSR]))
+            
+            
+            # Signal
+            processIndex += 1
+            #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
+            #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_sig)
+            #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
+            #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(yieldResult_nominal_sig["yield"][iSR], zeroReplacement))
+            #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = yieldResult_nominal_sig["yield"][iSR], err = yieldResult_nominal_sig["error"][iSR]))
+            d_block_mc["bin"].append(binLabel)
+            d_block_mc["processName"].append(label_sig)
+            d_block_mc["processIndex"].append(str(int(processIndex)))
+            d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(yieldResult_nominal_sig["yield"][iSR], zeroReplacement)))
+            #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_sig["yield"][iSR], err = yieldResult_nominal_sig["error"][iSR])))
+            
+            if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                
+                statPos = yieldResult_nominal_sig["error"][iSR]
+                statNeg = -yieldResult_nominal_sig["error"][iSR] * (yieldResult_nominal_sig["yield"][iSR] > 0)
+                d_systCombined_sig[sigKey]["stat"][iSR].append(["stat"+era, statPos, statNeg])
+            
+            fillStatError(
+                d_info = yieldResult_nominal_sig,
+                d_out = d_block_statErr,
+                processLabel = label_sig,
+                binLabel = cutFlowNameBase,
+                nProcess = nProcess,
+                iProcess = processIndex,
+                nBin = nSR_merged,
+                iBin = iSR,
+                era = era,
+                scale = 1.0 / numpy.sqrt(args.lumiScale),
             )
             
-            d_block_data["observation"].append("%0.4e" %(pseudodata_val))
-        
-        else :
-            
-            d_block_data["observation"].append("%d" %(yieldResult_data["yield"][iSR]))
-        
-        
-        # Signal
-        processIndex += 1
-        #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
-        #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_sig)
-        #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
-        #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(yieldResult_nominal_sig["yield"][iSR], zeroReplacement))
-        #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = yieldResult_nominal_sig["yield"][iSR], err = yieldResult_nominal_sig["error"][iSR]))
-        d_block_mc["bin"].append(binLabel)
-        d_block_mc["processName"].append(label_sig)
-        d_block_mc["processIndex"].append(str(int(processIndex)))
-        d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(yieldResult_nominal_sig["yield"][iSR], zeroReplacement)))
-        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_sig["yield"][iSR], err = yieldResult_nominal_sig["error"][iSR])))
-        
-        if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
-            
-            d_systCombined_sig[sigKey]["stat"][iSR] = yieldResult_nominal_sig["error"][iSR]
-        
-        fillStatError(
-            d_info = yieldResult_nominal_sig,
-            d_out = d_block_statErr,
-            processLabel = label_sig,
-            binLabel = cutFlowNameBase,
-            nProcess = nProcess,
-            iProcess = processIndex,
-            nBin = nSR_merged,
-            iBin = iSR,
-            era = era,
-        )
-        
-        
-        # ttbar
-        processIndex += 1
-        #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
-        #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_ttbar)
-        #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
-        #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(yieldResult_nominal_ttbar["yield"][iSR], zeroReplacement))
-        #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = yieldResult_nominal_ttbar["yield"][iSR], err = yieldResult_nominal_ttbar["error"][iSR]))
-        #d_systCombined[label_ttbar]["stat"][iSR] = yieldResult_nominal_ttbar["error"][iSR]
-        d_block_mc["bin"].append(binLabel)
-        d_block_mc["processName"].append(label_ttbar)
-        d_block_mc["processIndex"].append(str(int(processIndex)))
-        d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(yieldResult_nominal_ttbar["yield"][iSR], zeroReplacement)))
-        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_ttbar["yield"][iSR], err = yieldResult_nominal_ttbar["error"][iSR])))
-        d_systCombined[label_ttbar]["stat"][iSR] = yieldResult_nominal_ttbar["error"][iSR]
-        
-        fillStatError(
-            d_info = yieldResult_nominal_ttbar,
-            d_out = d_block_statErr,
-            processLabel = label_ttbar,
-            binLabel = cutFlowNameBase,
-            nProcess = nProcess,
-            iProcess = processIndex,
-            nBin = nSR_merged,
-            iBin = iSR,
-            era = era,
-        )
-        
-        #if (yieldResult_nominal_ttbar["yield"][iSR] == 0) :
-        #    
-        #    statName = "zerostat%s_%s_%s%d" %(era, label_ttbar, cutFlowNameBase, iSR+1)
-        #    d_block_err[statName] = [statName, "gmN 0"]
-        #    
-        #    nBefore = iSR*nProcess + processIndex
-        #    nAfter = nSR_merged*nProcess - nBefore - 1
-        #    
-        #    d_block_err[statName].extend(["-"] * nBefore)
-        #    d_block_err[statName].append("%0.4e" %(yieldResult_nominal_ttbar["scale"]))
-        #    d_block_err[statName].extend(["-"] * nAfter)
-        
-        
-        # DY
-        processIndex += 1
-        #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
-        #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_DYJetsToLL)
-        #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
-        #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(yieldResult_nominal_DYJetsToLL["yield"][iSR], zeroReplacement))
-        #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = yieldResult_nominal_DYJetsToLL["yield"][iSR], err = yieldResult_nominal_DYJetsToLL["error"][iSR]))
-        #d_systCombined[label_DYJetsToLL]["stat"][iSR] = yieldResult_nominal_DYJetsToLL["error"][iSR]
-        d_block_mc["bin"].append(binLabel)
-        d_block_mc["processName"].append(label_DYJetsToLL)
-        d_block_mc["processIndex"].append(str(int(processIndex)))
-        d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(yieldResult_nominal_DYJetsToLL["yield"][iSR], zeroReplacement)))
-        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_DYJetsToLL["yield"][iSR], err = yieldResult_nominal_DYJetsToLL["error"][iSR])))
-        d_systCombined[label_DYJetsToLL]["stat"][iSR] = yieldResult_nominal_DYJetsToLL["error"][iSR]
-        
-        fillStatError(
-            d_info = yieldResult_nominal_DYJetsToLL,
-            d_out = d_block_statErr,
-            processLabel = label_DYJetsToLL,
-            binLabel = cutFlowNameBase,
-            nProcess = nProcess,
-            iProcess = processIndex,
-            nBin = nSR_merged,
-            iBin = iSR,
-            era = era,
-        )
-        
-        
-        # Other SM
-        processIndex += 1
-        #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
-        #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_otherSM)
-        #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
-        #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(yieldResult_nominal_otherSM["yield"][iSR], zeroReplacement))
-        #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = yieldResult_nominal_otherSM["yield"][iSR], err = yieldResult_nominal_otherSM["error"][iSR]))
-        #d_systCombined[label_otherSM]["stat"][iSR] = yieldResult_nominal_otherSM["error"][iSR]
-        d_block_mc["bin"].append(binLabel)
-        d_block_mc["processName"].append(label_otherSM)
-        d_block_mc["processIndex"].append(str(int(processIndex)))
-        d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(yieldResult_nominal_otherSM["yield"][iSR], zeroReplacement)))
-        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_otherSM["yield"][iSR], err = yieldResult_nominal_otherSM["error"][iSR])))
-        d_systCombined[label_otherSM]["stat"][iSR] = yieldResult_nominal_otherSM["error"][iSR]
-        
-        fillStatError(
-            d_info = yieldResult_nominal_otherSM,
-            d_out = d_block_statErr,
-            processLabel = label_otherSM,
-            binLabel = cutFlowNameBase,
-            nProcess = nProcess,
-            iProcess = processIndex,
-            nBin = nSR_merged,
-            iBin = iSR,
-            era = era,
-        )
-        
-        
-        # Fake
-        processIndex += 1
-        #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
-        #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_fake)
-        #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
-        #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(yieldResult_nominal_fake["yield"][iSR], zeroReplacement))
-        #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = yieldResult_nominal_fake["yield"][iSR], err = yieldResult_nominal_fake["error"][iSR]))
-        #d_systCombined[label_fake]["stat"][iSR] = yieldResult_nominal_fake["error"][iSR]
-        d_block_mc["bin"].append(binLabel)
-        d_block_mc["processName"].append(label_fake)
-        d_block_mc["processIndex"].append(str(int(processIndex)))
-        d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(yieldResult_nominal_fake["yield"][iSR], zeroReplacement)))
-        #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = yieldResult_nominal_fake["yield"][iSR], err = yieldResult_nominal_fake["error"][iSR])))
-        d_systCombined[label_fake]["stat"][iSR] = yieldResult_nominal_fake["error"][iSR]
-        
-        fillStatError(
-            d_info = yieldResult_nominal_fake,
-            d_out = d_block_statErr,
-            processLabel = label_fake,
-            binLabel = cutFlowNameBase,
-            nProcess = nProcess,
-            iProcess = processIndex,
-            nBin = nSR_merged,
-            iBin = iSR,
-            era = era,
-            isFake = True,
-        )
-        
-        
-        for systKey in d_syst_sig :
-            
-            systName = getCorrStr(systKey, era, d_syst_sig[systKey]["correlated"])
-            
-            if (systKey not in d_block_err) :
-                
-                #d_block_err[systKey] = "%s %s" %(systKey, d_syst_sig[systKey]["type"])
-                d_block_err[systKey] = [systName, d_syst_sig[systKey]["type"]]
-                
-            
-            # Symmetric
-            if ("syst" in d_syst_sig[systKey][label_sig]) :
-                
-                # Signal
-                #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_sig[systKey][label_sig]["syst"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e" %(1+d_syst_sig[systKey][label_sig]["syst"][iSR]/100.0))
-                
-                if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
-                    
-                    err = yieldResult_nominal_sig["yield"][iSR]*d_syst_sig[systKey][label_sig]["syst"][iSR]/100.0
-                    
-                    d_systCombined_sig[sigKey]["syst"][iSR].append(err)
-                    d_systCombined_sig[sigKey]["syst"][iSR].append(-err)
-            
-            # Asymmetric
-            else :
-                
-                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_sig[systKey][label_sig]["systDown"][iSR]/100.0, 1+d_syst_sig[systKey][label_sig]["systUp"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_sig[systKey][label_sig]["systDown"][iSR]/100.0, 1+d_syst_sig[systKey][label_sig]["systUp"][iSR]/100.0))
-                
-                if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
-                    
-                    errUp = yieldResult_nominal_sig["yield"][iSR]*d_syst_sig[systKey][label_sig]["systUp"][iSR]/100.0
-                    errDown = yieldResult_nominal_sig["yield"][iSR]*d_syst_sig[systKey][label_sig]["systDown"][iSR]/100.0
-                    
-                    d_systCombined_sig[sigKey]["syst"][iSR].append(errUp)
-                    d_systCombined_sig[sigKey]["syst"][iSR].append(errDown)
             
             # ttbar
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # DY
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # Other SM
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # Fake
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-        
-        
-        for systKey in d_syst_commonMC :
-            
-            systName = getCorrStr(systKey, era, d_syst_commonMC[systKey]["correlated"])
-            
-            if (systKey not in d_block_err) :
-                
-                #d_block_err[systKey] = "%s %s" %(systKey, d_syst_commonMC[systKey]["type"])
-                d_block_err[systKey] = [systName, d_syst_commonMC[systKey]["type"]]
-            
-            # Symmetric
-            if ("syst" in d_syst_commonMC[systKey][label_DYJetsToLL]) :
-                
-                # Signal
-                if (systKey not in l_syst_sig_toExclude) :
-                    
-                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_sig]["syst"][iSR]/100.0)
-                    d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_sig]["syst"][iSR]/100.0))
-                    
-                    if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
-                        
-                        err = yieldResult_nominal_sig["yield"][iSR]*d_syst_commonMC[systKey][label_sig]["syst"][iSR]/100.0
-                        
-                        d_systCombined_sig[sigKey]["syst"][iSR].append(err)
-                        d_systCombined_sig[sigKey]["syst"][iSR].append(-err)
-                
-                else :
-                    
-                    d_block_err[systKey].append("-")
-                
-                # ttbar
-                if (systKey in l_syst_ttbar_toInclude) :
-                    
-                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_ttbar]["syst"][iSR]/100.0)
-                    d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_ttbar]["syst"][iSR]/100.0))
-                    
-                    if (iMass == 0) :
-                        
-                        err = yieldResult_nominal_ttbar["yield"][iSR]*d_syst_commonMC[systKey][label_ttbar]["syst"][iSR]/100.0
-                        
-                        d_systCombined[label_ttbar]["syst"][iSR].append(err)
-                        d_systCombined[label_ttbar]["syst"][iSR].append(-err)
-                
-                else :
-                    
-                    #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-                    d_block_err[systKey].append("-")
-                
-                # DY
-                #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_DYJetsToLL]["syst"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_DYJetsToLL]["syst"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    err = yieldResult_nominal_DYJetsToLL["yield"][iSR]*d_syst_commonMC[systKey][label_DYJetsToLL]["syst"][iSR]/100.0
-                    
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(err)
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(-err)
-                
-                # Other SM
-                #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_otherSM]["syst"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_otherSM]["syst"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    err = yieldResult_nominal_otherSM["yield"][iSR]*d_syst_commonMC[systKey][label_otherSM]["syst"][iSR]/100.0
-                    
-                    d_systCombined[label_otherSM]["syst"][iSR].append(err)
-                    d_systCombined[label_otherSM]["syst"][iSR].append(-err)
-            
-            # Asymmetric
-            else :
-                
-                # Signal
-                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_sig]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_sig]["systUp"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_sig]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_sig]["systUp"][iSR]/100.0))
-                
-                if (systKey not in l_syst_sig_toExclude) :
-                    
-                    if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
-                        
-                        errUp = yieldResult_nominal_sig["yield"][iSR]*d_syst_commonMC[systKey][label_sig]["systUp"][iSR]/100.0
-                        errDown = yieldResult_nominal_sig["yield"][iSR]*d_syst_commonMC[systKey][label_sig]["systDown"][iSR]/100.0
-                        
-                        d_systCombined_sig[sigKey]["syst"][iSR].append(errUp)
-                        d_systCombined_sig[sigKey]["syst"][iSR].append(errDown)
-                
-                else :
-                    
-                    d_block_err[systKey].append("-")
-                
-                # ttbar
-                if (systKey in l_syst_ttbar_toInclude) :
-                    
-                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_ttbar]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_ttbar]["systUp"][iSR]/100.0)
-                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_ttbar]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_ttbar]["systUp"][iSR]/100.0))
-                    
-                    if (iMass == 0) :
-                        
-                        errUp = yieldResult_nominal_ttbar["yield"][iSR]*d_syst_commonMC[systKey][label_ttbar]["systUp"][iSR]/100.0
-                        errDown = yieldResult_nominal_ttbar["yield"][iSR]*d_syst_commonMC[systKey][label_ttbar]["systDown"][iSR]/100.0
-                        
-                        d_systCombined[label_ttbar]["syst"][iSR].append(errUp)
-                        d_systCombined[label_ttbar]["syst"][iSR].append(errDown)
-                
-                else :
-                    
-                    #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-                    d_block_err[systKey].append("-")
-                
-                # DY
-                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    errUp = yieldResult_nominal_DYJetsToLL["yield"][iSR]*d_syst_commonMC[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0
-                    errDown = yieldResult_nominal_DYJetsToLL["yield"][iSR]*d_syst_commonMC[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0
-                    
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(errUp)
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(errDown)
-                
-                # Other SM
-                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_otherSM]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_otherSM]["systUp"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_otherSM]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_otherSM]["systUp"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    errUp = yieldResult_nominal_otherSM["yield"][iSR]*d_syst_commonMC[systKey][label_otherSM]["systUp"][iSR]/100.0
-                    errDown = yieldResult_nominal_otherSM["yield"][iSR]*d_syst_commonMC[systKey][label_otherSM]["systDown"][iSR]/100.0
-                    
-                    d_systCombined[label_otherSM]["syst"][iSR].append(errUp)
-                    d_systCombined[label_otherSM]["syst"][iSR].append(errDown)
-            
-            # Fake
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-        
-        
-        for systKey in d_syst_ttbar :
-            
-            systName = getCorrStr(systKey, era, d_syst_ttbar[systKey]["correlated"])
-            
-            if (systKey not in d_block_err) :
-                
-                #print d_syst_ttbar
-                #print d_syst_ttbar[systKey]["type"]
-                
-                #d_block_err[systKey] = "%s %s" %(systKey, d_syst_ttbar[systKey]["type"])
-                d_block_err[systKey] = [systName, d_syst_ttbar[systKey]["type"]]
-            
-            # Signal
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # ttbar
-            if ("syst" in d_syst_ttbar[systKey][label_ttbar]) :
-                
-                #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_ttbar[systKey][label_ttbar]["syst"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e" %(1+d_syst_ttbar[systKey][label_ttbar]["syst"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    err = yieldResult_nominal_ttbar["yield"][iSR]*d_syst_ttbar[systKey][label_ttbar]["syst"][iSR]/100.0
-                    
-                    d_systCombined[label_ttbar]["syst"][iSR].append(err)
-                    d_systCombined[label_ttbar]["syst"][iSR].append(-err)
-            
-            else :
-                
-                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_ttbar[systKey][label_ttbar]["systDown"][iSR]/100.0, 1+d_syst_ttbar[systKey][label_ttbar]["systUp"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_ttbar[systKey][label_ttbar]["systDown"][iSR]/100.0, 1+d_syst_ttbar[systKey][label_ttbar]["systUp"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    errUp = yieldResult_nominal_ttbar["yield"][iSR]*d_syst_ttbar[systKey][label_ttbar]["systUp"][iSR]/100.0
-                    errDown = yieldResult_nominal_ttbar["yield"][iSR]*d_syst_ttbar[systKey][label_ttbar]["systDown"][iSR]/100.0
-                    
-                    d_systCombined[label_ttbar]["syst"][iSR].append(errUp)
-                    d_systCombined[label_ttbar]["syst"][iSR].append(errDown)
-            
-            # DY
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # Other SM
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # Fake
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-        
-        
-        for systKey in d_syst_DY :
-            
-            systName = getCorrStr(systKey, era, d_syst_DY[systKey]["correlated"])
-            
-            if (systKey not in d_block_err) :
-                
-                #print d_syst_DY
-                #print d_syst_DY[systKey]["type"]
-                
-                #d_block_err[systKey] = "%s %s" %(systKey, d_syst_DY[systKey]["type"])
-                d_block_err[systKey] = [systName, d_syst_DY[systKey]["type"]]
-            
-            # Signal
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # ttbar
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # DY
-            if ("syst" in d_syst_DY[systKey][label_DYJetsToLL]) :
-                
-                #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_DY[systKey][label_DYJetsToLL]["syst"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e" %(1+d_syst_DY[systKey][label_DYJetsToLL]["syst"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    err = yieldResult_nominal_DYJetsToLL["yield"][iSR]*d_syst_DY[systKey][label_DYJetsToLL]["syst"][iSR]/100.0
-                    
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(err)
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(-err)
-            
-            else :
-                
-                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_DY[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0, 1+d_syst_DY[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0)
-                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_DY[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0, 1+d_syst_DY[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0))
-                
-                if (iMass == 0) :
-                    
-                    errUp = yieldResult_nominal_DYJetsToLL["yield"][iSR]*d_syst_DY[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0
-                    errDown = yieldResult_nominal_DYJetsToLL["yield"][iSR]*d_syst_DY[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0
-                    
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(errUp)
-                    d_systCombined[label_DYJetsToLL]["syst"][iSR].append(errDown)
-            
-            
-            # Other SM
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # Fake
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-        
-        
-        for systKey in d_syst_fake :
-            
-            systName = getCorrStr(systKey, era, d_syst_fake[systKey]["correlated"])
-            
-            if (systKey not in d_block_err) :
-                
-                #d_block_err[systKey] = "%s %s" %(systKey, d_syst_fake[systKey]["type"])
-                d_block_err[systKey] = [systName, d_syst_fake[systKey]["type"]]
-            
-            # Signal
-            #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
-            d_block_err[systKey].append("-")
-            
-            # ttbar
-            d_block_err[systKey].append("-")
-            
-            # DY
-            d_block_err[systKey].append("-")
-            
-            # Other SM
-            d_block_err[systKey].append("-")
-            
-            # Fake
-            #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_fake[systKey][label_fake]["systDown"][iSR]/100.0, 1+d_syst_fake[systKey][label_fake]["systUp"][iSR]/100.0)
-            d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_fake[systKey][label_fake]["systDown"][iSR]/100.0, 1+d_syst_fake[systKey][label_fake]["systUp"][iSR]/100.0))
+            processIndex += 1
+            #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
+            #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_ttbar)
+            #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
+            #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(d_yieldResult_nominal_ttbar[era]["yield"][iSR], zeroReplacement))
+            #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = d_yieldResult_nominal_ttbar[era]["yield"][iSR], err = d_yieldResult_nominal_ttbar[era]["error"][iSR]))
+            #d_systCombined[label_ttbar]["stat"][iSR] = d_yieldResult_nominal_ttbar[era]["error"][iSR]
+            d_block_mc["bin"].append(binLabel)
+            d_block_mc["processName"].append(label_ttbar)
+            d_block_mc["processIndex"].append(str(int(processIndex)))
+            d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(d_yieldResult_nominal_ttbar[era]["yield"][iSR], zeroReplacement)))
+            #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = d_yieldResult_nominal_ttbar[era]["yield"][iSR], err = d_yieldResult_nominal_ttbar[era]["error"][iSR])))
             
             if (iMass == 0) :
                 
-                errUp = yieldResult_nominal_fake["yield"][iSR]*d_syst_fake[systKey][label_fake]["systUp"][iSR]/100.0
-                errDown = yieldResult_nominal_fake["yield"][iSR]*d_syst_fake[systKey][label_fake]["systDown"][iSR]/100.0
+                statPos = d_yieldResult_nominal_ttbar[era]["error"][iSR]
+                statNeg = -d_yieldResult_nominal_ttbar[era]["error"][iSR] * (d_yieldResult_nominal_ttbar[era]["yield"][iSR] > 0)
+                d_systCombined[label_ttbar]["stat"][iSR].append(["stat"+era, statPos, statNeg])
+            
+            fillStatError(
+                d_info = d_yieldResult_nominal_ttbar[era],
+                d_out = d_block_statErr,
+                processLabel = label_ttbar,
+                binLabel = cutFlowNameBase,
+                nProcess = nProcess,
+                iProcess = processIndex,
+                nBin = nSR_merged,
+                iBin = iSR,
+                era = era,
+                scale = 1.0 / numpy.sqrt(args.lumiScale),
+            )
+            
+            #if (d_yieldResult_nominal_ttbar[era]["yield"][iSR] == 0) :
+            #    
+            #    statName = "zerostat%s_%s_%s%d" %(era, label_ttbar, cutFlowNameBase, iSR+1)
+            #    d_block_err[statName] = [statName, "gmN 0"]
+            #    
+            #    nBefore = iSR*nProcess + processIndex
+            #    nAfter = nSR_merged*nProcess - nBefore - 1
+            #    
+            #    d_block_err[statName].extend(["-"] * nBefore)
+            #    d_block_err[statName].append("%0.4e" %(d_yieldResult_nominal_ttbar[era]["scale"]))
+            #    d_block_err[statName].extend(["-"] * nAfter)
+            
+            
+            # DY
+            processIndex += 1
+            #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
+            #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_DYJetsToLL)
+            #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
+            #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR], zeroReplacement))
+            #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR], err = d_yieldResult_nominal_DYJetsToLL[era]["error"][iSR]))
+            #d_systCombined[label_DYJetsToLL]["stat"][iSR] = d_yieldResult_nominal_DYJetsToLL[era]["error"][iSR]
+            d_block_mc["bin"].append(binLabel)
+            d_block_mc["processName"].append(label_DYJetsToLL)
+            d_block_mc["processIndex"].append(str(int(processIndex)))
+            d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR], zeroReplacement)))
+            #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR], err = d_yieldResult_nominal_DYJetsToLL[era]["error"][iSR])))
+            
+            if (iMass == 0) :
                 
-                d_systCombined[label_fake]["syst"][iSR].append(errUp)
-                d_systCombined[label_fake]["syst"][iSR].append(errDown)
+                statPos = d_yieldResult_nominal_DYJetsToLL[era]["error"][iSR]
+                statNeg = -d_yieldResult_nominal_DYJetsToLL[era]["error"][iSR] * (d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR] > 0)
+                d_systCombined[label_DYJetsToLL]["stat"][iSR].append(["stat"+era, statPos, statNeg])
+            
+            fillStatError(
+                d_info = d_yieldResult_nominal_DYJetsToLL[era],
+                d_out = d_block_statErr,
+                processLabel = label_DYJetsToLL,
+                binLabel = cutFlowNameBase,
+                nProcess = nProcess,
+                iProcess = processIndex,
+                nBin = nSR_merged,
+                iBin = iSR,
+                era = era,
+                scale = 1.0 / numpy.sqrt(args.lumiScale),
+            )
+            
+            
+            # Other SM
+            processIndex += 1
+            #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
+            #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_otherSM)
+            #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
+            #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(d_yieldResult_nominal_otherSM[era]["yield"][iSR], zeroReplacement))
+            #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = d_yieldResult_nominal_otherSM[era]["yield"][iSR], err = d_yieldResult_nominal_otherSM[era]["error"][iSR]))
+            #d_systCombined[label_otherSM]["stat"][iSR] = d_yieldResult_nominal_otherSM[era]["error"][iSR]
+            d_block_mc["bin"].append(binLabel)
+            d_block_mc["processName"].append(label_otherSM)
+            d_block_mc["processIndex"].append(str(int(processIndex)))
+            d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(d_yieldResult_nominal_otherSM[era]["yield"][iSR], zeroReplacement)))
+            #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = d_yieldResult_nominal_otherSM[era]["yield"][iSR], err = d_yieldResult_nominal_otherSM[era]["error"][iSR])))
+            
+            if (iMass == 0) :
+                
+                statPos = d_yieldResult_nominal_otherSM[era]["error"][iSR]
+                statNeg = -d_yieldResult_nominal_otherSM[era]["error"][iSR] * (d_yieldResult_nominal_otherSM[era]["yield"][iSR] > 0)
+                d_systCombined[label_otherSM]["stat"][iSR].append(["stat"+era, statPos, statNeg])
+            
+            fillStatError(
+                d_info = d_yieldResult_nominal_otherSM[era],
+                d_out = d_block_statErr,
+                processLabel = label_otherSM,
+                binLabel = cutFlowNameBase,
+                nProcess = nProcess,
+                iProcess = processIndex,
+                nBin = nSR_merged,
+                iBin = iSR,
+                era = era,
+                scale = 1.0 / numpy.sqrt(args.lumiScale),
+            )
+            
+            
+            # Fake
+            processIndex += 1
+            #d_block_mc["bin"] = "%s %s" %(d_block_mc["bin"], binLabel)
+            #d_block_mc["processName"] = "%s %s" %(d_block_mc["processName"], label_fake)
+            #d_block_mc["processIndex"] = "%s %s" %(d_block_mc["processIndex"], str(int(processIndex)))
+            #d_block_mc["rate"] = "%s %0.4e" %(d_block_mc["rate"], Common.replaceZero(d_yieldResult_nominal_fake[era]["yield"][iSR], zeroReplacement))
+            #d_block_err["stat"] = "%s %0.4e" %(d_block_err["stat"], 1+Common.getRelativeError(val = d_yieldResult_nominal_fake[era]["yield"][iSR], err = d_yieldResult_nominal_fake[era]["error"][iSR]))
+            #d_systCombined[label_fake]["stat"][iSR] = d_yieldResult_nominal_fake[era]["error"][iSR]
+            d_block_mc["bin"].append(binLabel)
+            d_block_mc["processName"].append(label_fake)
+            d_block_mc["processIndex"].append(str(int(processIndex)))
+            d_block_mc["rate"].append("%0.4e" %(Common.replaceZero(d_yieldResult_nominal_fake[era]["yield"][iSR], zeroReplacement)))
+            #d_block_err["stat"].append("%0.4e" %(1+Common.getRelativeError(val = d_yieldResult_nominal_fake[era]["yield"][iSR], err = d_yieldResult_nominal_fake[era]["error"][iSR])))
+            
+            if (iMass == 0) :
+                
+                statPos = d_yieldResult_nominal_fake[era]["error"][iSR]
+                statNeg = -d_yieldResult_nominal_fake[era]["error"][iSR] * (d_yieldResult_nominal_fake[era]["yield"][iSR] > 0)
+                d_systCombined[label_fake]["stat"][iSR].append(["stat"+era, statPos, statNeg])
+            
+            fillStatError(
+                d_info = d_yieldResult_nominal_fake[era],
+                d_out = d_block_statErr,
+                processLabel = label_fake,
+                binLabel = cutFlowNameBase,
+                nProcess = nProcess,
+                iProcess = processIndex,
+                nBin = nSR_merged,
+                iBin = iSR,
+                era = era,
+                isFake = True,
+                scale = 1.0 / numpy.sqrt(args.lumiScale),
+            )
+            
+            
+            for systKey in d_syst_sig :
+                
+                systName = Common.getCorrStr(systKey, era, d_syst_sig[systKey]["correlated"])
+                
+                if (systKey not in d_block_err) :
+                    
+                    #d_block_err[systKey] = "%s %s" %(systKey, d_syst_sig[systKey]["type"])
+                    d_block_err[systKey] = [systName, d_syst_sig[systKey]["type"]]
+                    
+                
+                # Symmetric
+                if ("syst" in d_syst_sig[systKey][label_sig][era]) :
+                    
+                    # Signal
+                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_sig[systKey][label_sig][era]["syst"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e" %(1+d_syst_sig[systKey][label_sig][era]["syst"][iSR]/100.0))
+                    
+                    if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                        
+                        err = yieldResult_nominal_sig["yield"][iSR]*d_syst_sig[systKey][label_sig][era]["syst"][iSR]/100.0
+                        
+                        #d_systCombined_sig[era][sigKey]["syst"][iSR].append(err)
+                        #d_systCombined_sig[era][sigKey]["syst"][iSR].append(-err)
+                        d_systCombined_sig[sigKey]["syst"][iSR].append([systName, err, -err])
+                
+                # Asymmetric
+                else :
+                    
+                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_sig[systKey][label_sig][era]["systDown"][iSR]/100.0, 1+d_syst_sig[systKey][label_sig][era]["systUp"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_sig[systKey][label_sig][era]["systDown"][iSR]/100.0, 1+d_syst_sig[systKey][label_sig][era]["systUp"][iSR]/100.0))
+                    
+                    if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                        
+                        errUp = yieldResult_nominal_sig["yield"][iSR]*d_syst_sig[systKey][label_sig][era]["systUp"][iSR]/100.0
+                        errDown = yieldResult_nominal_sig["yield"][iSR]*d_syst_sig[systKey][label_sig][era]["systDown"][iSR]/100.0
+                        
+                        #d_systCombined_sig[era][sigKey]["syst"][iSR].append(errUp)
+                        #d_systCombined_sig[era][sigKey]["syst"][iSR].append(errDown)
+                        d_systCombined_sig[sigKey]["syst"][iSR].append([systName, errUp, errDown])
+                
+                # ttbar
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # DY
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # Other SM
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # Fake
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+            
+            
+            for systKey in d_syst_commonMC :
+                
+                systName = Common.getCorrStr(systKey, era, d_syst_commonMC[systKey]["correlated"])
+                
+                if (systKey not in d_block_err) :
+                    
+                    #d_block_err[systKey] = "%s %s" %(systKey, d_syst_commonMC[systKey]["type"])
+                    d_block_err[systKey] = [systName, d_syst_commonMC[systKey]["type"]]
+                
+                # Symmetric
+                if ("syst" in d_syst_commonMC[systKey][label_DYJetsToLL][era]) :
+                    
+                    # Signal
+                    if (systKey not in l_syst_sig_toExclude) :
+                        
+                        #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_sig]["syst"][iSR]/100.0)
+                        d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_sig][era]["syst"][iSR]/100.0))
+                        
+                        if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                            
+                            err = yieldResult_nominal_sig["yield"][iSR]*d_syst_commonMC[systKey][label_sig][era]["syst"][iSR]/100.0
+                            
+                            #d_systCombined_sig[era][sigKey]["syst"][iSR].append(err)
+                            #d_systCombined_sig[era][sigKey]["syst"][iSR].append(-err)
+                            d_systCombined_sig[sigKey]["syst"][iSR].append([systName, err, -err])
+                    
+                    else :
+                        
+                        d_block_err[systKey].append("-")
+                    
+                    # ttbar
+                    if (systKey in l_syst_ttbar_toInclude) :
+                        
+                        #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_ttbar]["syst"][iSR]/100.0)
+                        d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_ttbar][era]["syst"][iSR]/100.0))
+                        
+                        if (iMass == 0) :
+                            
+                            err = d_yieldResult_nominal_ttbar[era]["yield"][iSR]*d_syst_commonMC[systKey][label_ttbar][era]["syst"][iSR]/100.0
+                            
+                            #d_systCombined[label_ttbar][era]["syst"][iSR].append(err)
+                            #d_systCombined[label_ttbar][era]["syst"][iSR].append(-err)
+                            d_systCombined[label_ttbar]["syst"][iSR].append([systName, err, -err])
+                    
+                    else :
+                        
+                        #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                        d_block_err[systKey].append("-")
+                    
+                    # DY
+                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_DYJetsToLL]["syst"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_DYJetsToLL][era]["syst"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        err = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR]*d_syst_commonMC[systKey][label_DYJetsToLL][era]["syst"][iSR]/100.0
+                        
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(err)
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(-err)
+                        d_systCombined[label_DYJetsToLL]["syst"][iSR].append([systName, err, -err])
+                    
+                    # Other SM
+                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_otherSM]["syst"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e" %(1+d_syst_commonMC[systKey][label_otherSM][era]["syst"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        err = d_yieldResult_nominal_otherSM[era]["yield"][iSR]*d_syst_commonMC[systKey][label_otherSM][era]["syst"][iSR]/100.0
+                        
+                        #d_systCombined[label_otherSM][era]["syst"][iSR].append(err)
+                        #d_systCombined[label_otherSM][era]["syst"][iSR].append(-err)
+                        d_systCombined[label_otherSM]["syst"][iSR].append([systName, err, -err])
+                
+                # Asymmetric
+                else :
+                    
+                    # Signal
+                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_sig]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_sig]["systUp"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_sig][era]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_sig][era]["systUp"][iSR]/100.0))
+                    
+                    if (systKey not in l_syst_sig_toExclude) :
+                        
+                        if ([int(stop1_m), int(neutralino1_m)] in l_massPointYieldHist) :
+                            
+                            errUp = yieldResult_nominal_sig["yield"][iSR]*d_syst_commonMC[systKey][label_sig][era]["systUp"][iSR]/100.0
+                            errDown = yieldResult_nominal_sig["yield"][iSR]*d_syst_commonMC[systKey][label_sig][era]["systDown"][iSR]/100.0
+                            
+                            #d_systCombined_sig[era][sigKey]["syst"][iSR].append(errUp)
+                            #d_systCombined_sig[era][sigKey]["syst"][iSR].append(errDown)
+                            d_systCombined_sig[sigKey]["syst"][iSR].append([systName, errUp, errDown])
+                    
+                    else :
+                        
+                        d_block_err[systKey].append("-")
+                    
+                    # ttbar
+                    if (systKey in l_syst_ttbar_toInclude) :
+                        
+                        #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_ttbar]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_ttbar]["systUp"][iSR]/100.0)
+                        d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_ttbar][era]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_ttbar][era]["systUp"][iSR]/100.0))
+                        
+                        if (iMass == 0) :
+                            
+                            errUp = d_yieldResult_nominal_ttbar[era]["yield"][iSR]*d_syst_commonMC[systKey][label_ttbar][era]["systUp"][iSR]/100.0
+                            errDown = d_yieldResult_nominal_ttbar[era]["yield"][iSR]*d_syst_commonMC[systKey][label_ttbar][era]["systDown"][iSR]/100.0
+                            
+                            #d_systCombined[label_ttbar][era]["syst"][iSR].append(errUp)
+                            #d_systCombined[label_ttbar][era]["syst"][iSR].append(errDown)
+                            d_systCombined[label_ttbar]["syst"][iSR].append([systName, errUp, errDown])
+                    
+                    else :
+                        
+                        #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                        d_block_err[systKey].append("-")
+                    
+                    # DY
+                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_DYJetsToLL][era]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_DYJetsToLL][era]["systUp"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        errUp = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR]*d_syst_commonMC[systKey][label_DYJetsToLL][era]["systUp"][iSR]/100.0
+                        errDown = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR]*d_syst_commonMC[systKey][label_DYJetsToLL][era]["systDown"][iSR]/100.0
+                        
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(errUp)
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(errDown)
+                        d_systCombined[label_DYJetsToLL]["syst"][iSR].append([systName, errUp, errDown])
+                    
+                    # Other SM
+                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_commonMC[systKey][label_otherSM]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_otherSM]["systUp"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_commonMC[systKey][label_otherSM][era]["systDown"][iSR]/100.0, 1+d_syst_commonMC[systKey][label_otherSM][era]["systUp"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        errUp = d_yieldResult_nominal_otherSM[era]["yield"][iSR]*d_syst_commonMC[systKey][label_otherSM][era]["systUp"][iSR]/100.0
+                        errDown = d_yieldResult_nominal_otherSM[era]["yield"][iSR]*d_syst_commonMC[systKey][label_otherSM][era]["systDown"][iSR]/100.0
+                        
+                        #d_systCombined[label_otherSM][era]["syst"][iSR].append(errUp)
+                        #d_systCombined[label_otherSM][era]["syst"][iSR].append(errDown)
+                        d_systCombined[label_otherSM]["syst"][iSR].append([systName, errUp, errDown])
+                
+                # Fake
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+            
+            
+            for systKey in d_syst_ttbar :
+                
+                systName = Common.getCorrStr(systKey, era, d_syst_ttbar[systKey]["correlated"])
+                
+                if (systKey not in d_block_err) :
+                    
+                    #print d_syst_ttbar
+                    #print d_syst_ttbar[systKey]["type"]
+                    
+                    #d_block_err[systKey] = "%s %s" %(systKey, d_syst_ttbar[systKey]["type"])
+                    d_block_err[systKey] = [systName, d_syst_ttbar[systKey]["type"]]
+                
+                # Signal
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # ttbar
+                if ("syst" in d_syst_ttbar[systKey][label_ttbar][era]) :
+                    
+                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_ttbar[systKey][label_ttbar]["syst"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e" %(1+d_syst_ttbar[systKey][label_ttbar][era]["syst"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        err = d_yieldResult_nominal_ttbar[era]["yield"][iSR]*d_syst_ttbar[systKey][label_ttbar][era]["syst"][iSR]/100.0
+                        
+                        #d_systCombined[label_ttbar][era]["syst"][iSR].append(err)
+                        #d_systCombined[label_ttbar][era]["syst"][iSR].append(-err)
+                        d_systCombined[label_ttbar]["syst"][iSR].append([systName, err, -err])
+                
+                else :
+                    
+                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_ttbar[systKey][label_ttbar]["systDown"][iSR]/100.0, 1+d_syst_ttbar[systKey][label_ttbar]["systUp"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_ttbar[systKey][label_ttbar][era]["systDown"][iSR]/100.0, 1+d_syst_ttbar[systKey][label_ttbar][era]["systUp"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        errUp = d_yieldResult_nominal_ttbar[era]["yield"][iSR]*d_syst_ttbar[systKey][label_ttbar][era]["systUp"][iSR]/100.0
+                        errDown = d_yieldResult_nominal_ttbar[era]["yield"][iSR]*d_syst_ttbar[systKey][label_ttbar][era]["systDown"][iSR]/100.0
+                        
+                        #d_systCombined[label_ttbar][era]["syst"][iSR].append(errUp)
+                        #d_systCombined[label_ttbar][era]["syst"][iSR].append(errDown)
+                        d_systCombined[label_ttbar]["syst"][iSR].append([systName, errUp, errDown])
+                
+                # DY
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # Other SM
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # Fake
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+            
+            
+            for systKey in d_syst_DY :
+                
+                systName = Common.getCorrStr(systKey, era, d_syst_DY[systKey]["correlated"])
+                
+                if (systKey not in d_block_err) :
+                    
+                    #print d_syst_DY
+                    #print d_syst_DY[systKey]["type"]
+                    
+                    #d_block_err[systKey] = "%s %s" %(systKey, d_syst_DY[systKey]["type"])
+                    d_block_err[systKey] = [systName, d_syst_DY[systKey]["type"]]
+                
+                # Signal
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # ttbar
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # DY
+                if ("syst" in d_syst_DY[systKey][label_DYJetsToLL]) :
+                    
+                    #d_block_err[systKey] = "%s %0.4e" %(d_block_err[systKey], 1+d_syst_DY[systKey][label_DYJetsToLL]["syst"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e" %(1+d_syst_DY[systKey][label_DYJetsToLL][era]["syst"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        err = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR]*d_syst_DY[systKey][label_DYJetsToLL][era]["syst"][iSR]/100.0
+                        
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(err)
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(-err)
+                        d_systCombined[label_DYJetsToLL]["syst"][iSR].append([systName, err, -err])
+                
+                else :
+                    
+                    #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_DY[systKey][label_DYJetsToLL]["systDown"][iSR]/100.0, 1+d_syst_DY[systKey][label_DYJetsToLL]["systUp"][iSR]/100.0)
+                    d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_DY[systKey][label_DYJetsToLL][era]["systDown"][iSR]/100.0, 1+d_syst_DY[systKey][label_DYJetsToLL][era]["systUp"][iSR]/100.0))
+                    
+                    if (iMass == 0) :
+                        
+                        errUp = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR]*d_syst_DY[systKey][label_DYJetsToLL][era]["systUp"][iSR]/100.0
+                        errDown = d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR]*d_syst_DY[systKey][label_DYJetsToLL][era]["systDown"][iSR]/100.0
+                        
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(errUp)
+                        #d_systCombined[label_DYJetsToLL][era]["syst"][iSR].append(errDown)
+                        d_systCombined[label_DYJetsToLL]["syst"][iSR].append([systName, errUp, errDown])
+                
+                
+                # Other SM
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # Fake
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+            
+            
+            for systKey in d_syst_fake :
+                
+                systName = Common.getCorrStr(systKey, era, d_syst_fake[systKey]["correlated"])
+                
+                if (systKey not in d_block_err) :
+                    
+                    #d_block_err[systKey] = "%s %s" %(systKey, d_syst_fake[systKey]["type"])
+                    d_block_err[systKey] = [systName, d_syst_fake[systKey]["type"]]
+                
+                # Signal
+                #d_block_err[systKey] = "%s %s" %(d_block_err[systKey], "-")
+                d_block_err[systKey].append("-")
+                
+                # ttbar
+                d_block_err[systKey].append("-")
+                
+                # DY
+                d_block_err[systKey].append("-")
+                
+                # Other SM
+                d_block_err[systKey].append("-")
+                
+                # Fake
+                #d_block_err[systKey] = "%s %0.4e/%0.4e" %(d_block_err[systKey], 1+d_syst_fake[systKey][label_fake]["systDown"][iSR]/100.0, 1+d_syst_fake[systKey][label_fake]["systUp"][iSR]/100.0)
+                d_block_err[systKey].append("%0.4e/%0.4e" %(1+d_syst_fake[systKey][label_fake][era]["systDown"][iSR]/100.0, 1+d_syst_fake[systKey][label_fake][era]["systUp"][iSR]/100.0))
+                
+                if (iMass == 0) :
+                    
+                    errUp = d_yieldResult_nominal_fake[era]["yield"][iSR]*d_syst_fake[systKey][label_fake][era]["systUp"][iSR]/100.0
+                    errDown = d_yieldResult_nominal_fake[era]["yield"][iSR]*d_syst_fake[systKey][label_fake][era]["systDown"][iSR]/100.0
+                    
+                    #d_systCombined[label_fake][era]["syst"][iSR].append(errUp)
+                    #d_systCombined[label_fake][era]["syst"][iSR].append(errDown)
+                    d_systCombined[label_fake]["syst"][iSR].append([systName, errUp, errDown])
+            
+            
+            # Card per bin
+            #if (args.cardPerBin) :
+            #    
+            #    xxx
         
+        outFileName = "%s/%s" %(combineOutputDir, combineDatacard_name_mod)
         
-        # Card per bin
-        #if (args.cardPerBin) :
-        #    
-        #    xxx
-    
-    outFileName = "%s/%s" %(combineOutputDir, combineDatacard_name_mod)
-    
-    if (args.card) :
+        # Card filename suffix:
+        outFileName = outFileName.replace(".txt", args.cardSuffix + ".txt")
         
-        writeCard(
-            combineDatacard_content = combineDatacard_content_mod,
-            era = era,
-            outFileName = outFileName,
-            d_block_data = d_block_data,
-            d_block_mc = d_block_mc,
-            d_block_err = d_block_err,
-            d_block_statErr = d_block_statErr,
-        )
+        if (args.card) :
+            
+            writeCard(
+                combineDatacard_content = combineDatacard_content_mod,
+                era = era,
+                outFileName = outFileName,
+                d_block_data = d_block_data,
+                d_block_mc = d_block_mc,
+                d_block_err = d_block_err,
+                d_block_statErr = d_block_statErr,
+            )
 
 
 if (args.syst) :
@@ -2117,6 +2375,8 @@ if (args.syst) :
     l_systTable = []
     l_systTable_range = []
     
+    
+    eraStr = "+".join(l_era)
     
     # Signal specific
     for systKey in d_syst_sig :
@@ -2127,26 +2387,38 @@ if (args.syst) :
         l_systRow.append(d_syst_sig[systKey]["latexTitle"])
         l_systRow_range.append(d_syst_sig[systKey]["latexTitle"])
         
+        
+        # Combine
+        for iSig in range(0, len(l_massPointYieldHist)) :
+            
+            key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
+            
+            d_massPointSystTable[key][systKey][eraStr] = Common.getEraCombinedSystInfoMean(
+                d_systInfo = d_massPointSystTable[key][systKey],
+                d_yieldInfo = d_massPointYieldHist[key]
+            )
+        
+        
         # Symmetric
-        if ("syst_mean" in d_syst_sig[systKey][label_sig]) :
+        if ("syst_mean" in d_syst_sig[systKey][label_sig][era]) :
             
             for iSig in range(0, len(l_massPointYieldHist)) :
                 
                 key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
                 
-                print systKey, label_sig, d_massPointSystTable[key][systKey]["syst_mean"]
-                l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_massPointSystTable[key][systKey]["syst_mean"]))
+                print systKey, label_sig, d_massPointSystTable[key][systKey][eraStr]["syst_mean"]
+                l_systRow.append(r"$ \pm %0.2g \%% $" %(d_massPointSystTable[key][systKey][eraStr]["syst_mean"]))
                 
-                l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey]["syst"])
+                l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey][eraStr]["syst"])
                 l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
                 
                 if (min(l_syst_temp) == max(l_syst_temp)) :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
                 
                 else :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
         
         # Asymmetric
@@ -2156,20 +2428,28 @@ if (args.syst) :
                 
                 key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
                 
-                print systKey, label_sig, d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]
-                #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]))
-                l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]))
+                minPreci = Common.getMinPrecision([
+                    "%0.2g" %(d_massPointSystTable[key][systKey][eraStr]["systUp_mean"]),
+                    "%0.2g" %(d_massPointSystTable[key][systKey][eraStr]["systDown_mean"]),
+                ])
                 
-                l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey]["systUp"] + d_massPointSystTable[key][systKey]["systDown"])
+                print systKey, label_sig, d_massPointSystTable[key][systKey][eraStr]["systUp_mean"], d_massPointSystTable[key][systKey][eraStr]["systDown_mean"]
+                #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]))
+                l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                    Common.formatNumberMin(d_massPointSystTable[key][systKey][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                    Common.formatNumberMin(d_massPointSystTable[key][systKey][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+                ))
+                
+                l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey][eraStr]["systUp"] + d_massPointSystTable[key][systKey][eraStr]["systDown"])
                 l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
                 
                 if (min(l_syst_temp) == max(l_syst_temp)) :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
                 
                 else :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
         
         l_systRow.append(r"\NA")
@@ -2198,8 +2478,37 @@ if (args.syst) :
         l_systRow.append(d_syst_commonMC[systKey]["latexTitle"])
         l_systRow_range.append(d_syst_commonMC[systKey]["latexTitle"])
         
+        
+        # Combine
+        for iSig in range(0, len(l_massPointYieldHist)) :
+            
+            key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
+            
+            if (systKey not in l_syst_sig_toExclude) :
+                
+                d_massPointSystTable[key][systKey][eraStr] = Common.getEraCombinedSystInfoMean(
+                    d_systInfo = d_massPointSystTable[key][systKey],
+                    d_yieldInfo = d_massPointYieldHist[key]
+                )
+        
+        d_syst_commonMC[systKey][label_ttbar][eraStr] = Common.getEraCombinedSystInfoMean(
+            d_systInfo = d_syst_commonMC[systKey][label_ttbar],
+            d_yieldInfo = d_yieldResult_nominal_ttbar
+        )
+        
+        d_syst_commonMC[systKey][label_DYJetsToLL][eraStr] = Common.getEraCombinedSystInfoMean(
+            d_systInfo = d_syst_commonMC[systKey][label_DYJetsToLL],
+            d_yieldInfo = d_yieldResult_nominal_DYJetsToLL
+        )
+        
+        d_syst_commonMC[systKey][label_otherSM][eraStr] = Common.getEraCombinedSystInfoMean(
+            d_systInfo = d_syst_commonMC[systKey][label_otherSM],
+            d_yieldInfo = d_yieldResult_nominal_otherSM
+        )
+        
+        
         # Symmetric
-        if ("syst_mean" in d_syst_commonMC[systKey][label_DYJetsToLL]) :
+        if ("syst_mean" in d_syst_commonMC[systKey][label_DYJetsToLL][era]) :
             
             # Signal
             for iSig in range(0, len(l_massPointYieldHist)) :
@@ -2208,19 +2517,19 @@ if (args.syst) :
                 
                 if (systKey not in l_syst_sig_toExclude) :
                     
-                    print systKey, label_ttbar, d_massPointSystTable[key][systKey]["syst_mean"]
-                    l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_massPointSystTable[key][systKey]["syst_mean"]))
+                    print systKey, label_ttbar, d_massPointSystTable[key][systKey][eraStr]["syst_mean"]
+                    l_systRow.append(r"$ \pm %0.2g \%% $" %(d_massPointSystTable[key][systKey][eraStr]["syst_mean"]))
                     
-                    l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey]["syst"])
+                    l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey][eraStr]["syst"])
                     l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
                     
                     if (min(l_syst_temp) == max(l_syst_temp)) :
                         
-                        l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                        l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
                     
                     else :
                         
-                        l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                        l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
                 
                 else :
                     
@@ -2231,19 +2540,19 @@ if (args.syst) :
             # ttbar
             if (systKey in l_syst_ttbar_toInclude) :
                 
-                print systKey, label_ttbar, d_syst_commonMC[systKey][label_ttbar]["syst_mean"]
-                l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_syst_commonMC[systKey][label_ttbar]["syst_mean"]))
+                print systKey, label_ttbar, d_syst_commonMC[systKey][label_ttbar][eraStr]["syst_mean"]
+                l_systRow.append(r"$ \pm %0.2g \%% $" %(d_syst_commonMC[systKey][label_ttbar][eraStr]["syst_mean"]))
                 
-                l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_ttbar]["syst"])
+                l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_ttbar][eraStr]["syst"])
                 l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
                 
                 if (min(l_syst_temp) == max(l_syst_temp)) :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
                 
                 else :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
             else :
                 
@@ -2252,35 +2561,35 @@ if (args.syst) :
             
             
             # DY
-            print systKey, label_DYJetsToLL, d_syst_commonMC[systKey][label_DYJetsToLL]["syst_mean"]
-            l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_syst_commonMC[systKey][label_DYJetsToLL]["syst_mean"]))
+            print systKey, label_DYJetsToLL, d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["syst_mean"]
+            l_systRow.append(r"$ \pm %0.2g \%% $" %(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["syst_mean"]))
             
-            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_DYJetsToLL]["syst"])
+            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["syst"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
             
             # Other SM
-            print systKey, label_otherSM, d_syst_commonMC[systKey][label_otherSM]["syst_mean"]
-            l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_syst_commonMC[systKey][label_otherSM]["syst_mean"]))
+            print systKey, label_otherSM, d_syst_commonMC[systKey][label_otherSM][eraStr]["syst_mean"]
+            l_systRow.append(r"$ \pm %0.2g \%% $" %(d_syst_commonMC[systKey][label_otherSM][eraStr]["syst_mean"]))
             
-            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_otherSM]["syst"])
+            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_otherSM][eraStr]["syst"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
         
         # Asymmetric
@@ -2293,20 +2602,28 @@ if (args.syst) :
                 
                 if (systKey not in l_syst_sig_toExclude) :
                     
-                    print systKey, label_sig, d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]
-                    #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]))
-                    l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]))
+                    minPreci = Common.getMinPrecision([
+                        "%0.2g" %(d_massPointSystTable[key][systKey][eraStr]["systUp_mean"]),
+                        "%0.2g" %(d_massPointSystTable[key][systKey][eraStr]["systDown_mean"]),
+                    ])
                     
-                    l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey]["systUp"] + d_massPointSystTable[key][systKey]["systDown"])
+                    print systKey, label_sig, d_massPointSystTable[key][systKey][eraStr]["systUp_mean"], d_massPointSystTable[key][systKey][eraStr]["systDown_mean"]
+                    #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_massPointSystTable[key][systKey]["systUp_mean"], d_massPointSystTable[key][systKey]["systDown_mean"]))
+                    l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                        Common.formatNumberMin(d_massPointSystTable[key][systKey][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                        Common.formatNumberMin(d_massPointSystTable[key][systKey][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+                    ))
+                    
+                    l_syst_temp = copy.deepcopy(d_massPointSystTable[key][systKey][eraStr]["systUp"] + d_massPointSystTable[key][systKey][eraStr]["systDown"])
                     l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
                     
                     if (min(l_syst_temp) == max(l_syst_temp)) :
                         
-                        l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                        l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
                     
                     else :
                         
-                        l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                        l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
                 
                 else :
                     
@@ -2317,20 +2634,28 @@ if (args.syst) :
             # ttbar
             if (systKey in l_syst_ttbar_toInclude) :
                 
-                print systKey, label_ttbar, d_syst_commonMC[systKey][label_ttbar]["systUp_mean"], d_syst_commonMC[systKey][label_ttbar]["systDown_mean"]
-                #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_syst_commonMC[systKey][label_ttbar]["systUp_mean"], d_syst_commonMC[systKey][label_ttbar]["systDown_mean"]))
-                l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_syst_commonMC[systKey][label_ttbar]["systUp_mean"], d_syst_commonMC[systKey][label_ttbar]["systDown_mean"]))
+                minPreci = Common.getMinPrecision([
+                    "%0.2g" %(d_syst_commonMC[systKey][label_ttbar][eraStr]["systUp_mean"]),
+                    "%0.2g" %(d_syst_commonMC[systKey][label_ttbar][eraStr]["systDown_mean"]),
+                ])
                 
-                l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_ttbar]["systUp"] + d_syst_commonMC[systKey][label_ttbar]["systDown"])
+                print systKey, label_ttbar, d_syst_commonMC[systKey][label_ttbar][eraStr]["systUp_mean"], d_syst_commonMC[systKey][label_ttbar][eraStr]["systDown_mean"]
+                #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_syst_commonMC[systKey][label_ttbar]["systUp_mean"], d_syst_commonMC[systKey][label_ttbar]["systDown_mean"]))
+                l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                    Common.formatNumberMin(d_syst_commonMC[systKey][label_ttbar][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                    Common.formatNumberMin(d_syst_commonMC[systKey][label_ttbar][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+                ))
+                
+                l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_ttbar][eraStr]["systUp"] + d_syst_commonMC[systKey][label_ttbar][eraStr]["systDown"])
                 l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
                 
                 if (min(l_syst_temp) == max(l_syst_temp)) :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
                 
                 else :
                     
-                    l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                    l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
             else :
                 
@@ -2339,37 +2664,53 @@ if (args.syst) :
             
             
             # DY
-            print systKey, label_DYJetsToLL, d_syst_commonMC[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_commonMC[systKey][label_DYJetsToLL]["systDown_mean"]
-            #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_syst_commonMC[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_commonMC[systKey][label_DYJetsToLL]["systDown_mean"]))
-            l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_syst_commonMC[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_commonMC[systKey][label_DYJetsToLL]["systDown_mean"]))
+            minPreci = Common.getMinPrecision([
+                "%0.2g" %(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systUp_mean"]),
+                "%0.2g" %(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systDown_mean"]),
+            ])
             
-            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_DYJetsToLL]["systUp"] + d_syst_commonMC[systKey][label_DYJetsToLL]["systDown"])
+            print systKey, label_DYJetsToLL, d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systUp_mean"], d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systDown_mean"]
+            #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_syst_commonMC[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_commonMC[systKey][label_DYJetsToLL]["systDown_mean"]))
+            l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                Common.formatNumberMin(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                Common.formatNumberMin(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+            ))
+            
+            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systUp"] + d_syst_commonMC[systKey][label_DYJetsToLL][eraStr]["systDown"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
             
             # Other SM
-            print systKey, label_otherSM, d_syst_commonMC[systKey][label_otherSM]["systUp_mean"], d_syst_commonMC[systKey][label_otherSM]["systDown_mean"]
-            #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_syst_commonMC[systKey][label_otherSM]["systUp_mean"], d_syst_commonMC[systKey][label_otherSM]["systDown_mean"]))
-            l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_syst_commonMC[systKey][label_otherSM]["systUp_mean"], d_syst_commonMC[systKey][label_otherSM]["systDown_mean"]))
+            minPreci = Common.getMinPrecision([
+                "%0.2g" %(d_syst_commonMC[systKey][label_otherSM][eraStr]["systUp_mean"]),
+                "%0.2g" %(d_syst_commonMC[systKey][label_otherSM][eraStr]["systDown_mean"]),
+            ])
             
-            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_otherSM]["systUp"] + d_syst_commonMC[systKey][label_otherSM]["systDown"])
+            print systKey, label_otherSM, d_syst_commonMC[systKey][label_otherSM][eraStr]["systUp_mean"], d_syst_commonMC[systKey][label_otherSM][eraStr]["systDown_mean"]
+            #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_syst_commonMC[systKey][label_otherSM]["systUp_mean"], d_syst_commonMC[systKey][label_otherSM]["systDown_mean"]))
+            l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                Common.formatNumberMin(d_syst_commonMC[systKey][label_otherSM][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                Common.formatNumberMin(d_syst_commonMC[systKey][label_otherSM][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+            ))
+            
+            l_syst_temp = copy.deepcopy(d_syst_commonMC[systKey][label_otherSM][eraStr]["systUp"] + d_syst_commonMC[systKey][label_otherSM][eraStr]["systDown"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
             
         
         # Fake
@@ -2392,45 +2733,61 @@ if (args.syst) :
         l_systRow.append(d_syst_ttbar[systKey]["latexTitle"])
         l_systRow_range.append(d_syst_ttbar[systKey]["latexTitle"])
         
+        
+        # Combine
+        d_syst_ttbar[systKey][label_ttbar][eraStr] = Common.getEraCombinedSystInfoMean(
+            d_systInfo = d_syst_ttbar[systKey][label_ttbar],
+            d_yieldInfo = d_yieldResult_nominal_ttbar
+        )
+        
+        
         for iSig in range(0, len(l_massPointYieldHist)) :
             
             l_systRow.append(r"\NA")
             l_systRow_range.append(r"\NA")
         
         # Symmetric
-        if ("syst_mean" in d_syst_ttbar[systKey][label_ttbar]) :
+        if ("syst_mean" in d_syst_ttbar[systKey][label_ttbar][era]) :
             
-            print systKey, label_ttbar, d_syst_ttbar[systKey][label_ttbar]["syst_mean"]
-            l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_syst_ttbar[systKey][label_ttbar]["syst_mean"]))
+            print systKey, label_ttbar, d_syst_ttbar[systKey][label_ttbar][eraStr]["syst_mean"]
+            l_systRow.append(r"$ \pm %0.2g \%% $" %(d_syst_ttbar[systKey][label_ttbar][eraStr]["syst_mean"]))
             
-            l_syst_temp = copy.deepcopy(d_syst_ttbar[systKey][label_ttbar]["syst"])
+            l_syst_temp = copy.deepcopy(d_syst_ttbar[systKey][label_ttbar][eraStr]["syst"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
         
         # Asymmetric
         else :
             
-            print systKey, label_ttbar, d_syst_ttbar[systKey][label_ttbar]["systUp_mean"], d_syst_ttbar[systKey][label_ttbar]["systDown_mean"]
-            #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_syst_ttbar[systKey][label_ttbar]["systUp_mean"], d_syst_ttbar[systKey][label_ttbar]["systDown_mean"]))
-            l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_syst_ttbar[systKey][label_ttbar]["systUp_mean"], d_syst_ttbar[systKey][label_ttbar]["systDown_mean"]))
+            minPreci = Common.getMinPrecision([
+                "%0.2g" %(d_syst_ttbar[systKey][label_ttbar][eraStr]["systUp_mean"]),
+                "%0.2g" %(d_syst_ttbar[systKey][label_ttbar][eraStr]["systDown_mean"]),
+            ])
             
-            l_syst_temp = copy.deepcopy(d_syst_ttbar[systKey][label_ttbar]["systUp"] + d_syst_ttbar[systKey][label_ttbar]["systDown"])
+            print systKey, label_ttbar, d_syst_ttbar[systKey][label_ttbar]["systUp_mean"], d_syst_ttbar[systKey][label_ttbar][eraStr]["systDown_mean"]
+            #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_syst_ttbar[systKey][label_ttbar]["systUp_mean"], d_syst_ttbar[systKey][label_ttbar]["systDown_mean"]))
+            l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                Common.formatNumberMin(d_syst_ttbar[systKey][label_ttbar][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                Common.formatNumberMin(d_syst_ttbar[systKey][label_ttbar][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+            ))
+            
+            l_syst_temp = copy.deepcopy(d_syst_ttbar[systKey][label_ttbar][eraStr]["systUp"] + d_syst_ttbar[systKey][label_ttbar][eraStr]["systDown"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
         
         l_systRow.append(r"\NA")
         l_systRow.append(r"\NA")
@@ -2456,6 +2813,14 @@ if (args.syst) :
         l_systRow.append(d_syst_DY[systKey]["latexTitle"])
         l_systRow_range.append(d_syst_DY[systKey]["latexTitle"])
         
+        
+        # Combine
+        d_syst_DY[systKey][label_DYJetsToLL][eraStr] = Common.getEraCombinedSystInfoMean(
+            d_systInfo = d_syst_DY[systKey][label_DYJetsToLL],
+            d_yieldInfo = d_yieldResult_nominal_DYJetsToLL
+        )
+        
+        
         for iSig in range(0, len(l_massPointYieldHist)) :
             
             l_systRow.append(r"\NA")
@@ -2465,39 +2830,47 @@ if (args.syst) :
         l_systRow_range.append(r"\NA")
         
         # Symmetric
-        if ("syst_mean" in d_syst_DY[systKey][label_DYJetsToLL]) :
+        if ("syst_mean" in d_syst_DY[systKey][label_DYJetsToLL][era]) :
             
-            print systKey, label_DYJetsToLL, d_syst_DY[systKey][label_DYJetsToLL]["syst_mean"]
-            l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_syst_DY[systKey][label_DYJetsToLL]["syst_mean"]))
+            print systKey, label_DYJetsToLL, d_syst_DY[systKey][label_DYJetsToLL][eraStr]["syst_mean"]
+            l_systRow.append(r"$ \pm %0.2g \%% $" %(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["syst_mean"]))
             
-            l_syst_temp = copy.deepcopy(d_syst_DY[systKey][label_DYJetsToLL]["syst"])
+            l_syst_temp = copy.deepcopy(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["syst"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
         
         # Asymmetric
         else :
             
-            print systKey, label_DYJetsToLL, d_syst_DY[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_DY[systKey][label_DYJetsToLL]["systDown_mean"]
-            #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_syst_DY[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_DY[systKey][label_DYJetsToLL]["systDown_mean"]))
-            l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_syst_DY[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_DY[systKey][label_DYJetsToLL]["systDown_mean"]))
+            minPreci = Common.getMinPrecision([
+                "%0.2g" %(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systUp_mean"]),
+                "%0.2g" %(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systDown_mean"]),
+            ])
             
-            l_syst_temp = copy.deepcopy(d_syst_DY[systKey][label_DYJetsToLL]["systUp"] + d_syst_DY[systKey][label_DYJetsToLL]["systDown"])
+            print systKey, label_DYJetsToLL, d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systUp_mean"], d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systDown_mean"]
+            #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_syst_DY[systKey][label_DYJetsToLL]["systUp_mean"], d_syst_DY[systKey][label_DYJetsToLL]["systDown_mean"]))
+            l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                Common.formatNumberMin(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                Common.formatNumberMin(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+            ))
+            
+            l_syst_temp = copy.deepcopy(d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systUp"] + d_syst_DY[systKey][label_DYJetsToLL][eraStr]["systDown"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
         
         l_systRow.append(r"\NA")
         l_systRow.append(r"\NA")
@@ -2521,6 +2894,14 @@ if (args.syst) :
         l_systRow.append(d_syst_fake[systKey]["latexTitle"])
         l_systRow_range.append(d_syst_fake[systKey]["latexTitle"])
         
+        
+        # Combine
+        d_syst_fake[systKey][label_fake][eraStr] = Common.getEraCombinedSystInfoMean(
+            d_systInfo = d_syst_fake[systKey][label_fake],
+            d_yieldInfo = d_yieldResult_nominal_fake
+        )
+        
+        
         for iSig in range(0, len(l_massPointYieldHist)) :
             
             l_systRow.append(r"\NA")
@@ -2535,39 +2916,47 @@ if (args.syst) :
         l_systRow_range.append(r"\NA")
         
         # Symmetric
-        if ("syst_mean" in d_syst_fake[systKey][label_fake]) :
+        if ("syst_mean" in d_syst_fake[systKey][label_fake][era]) :
             
-            print systKey, label_fake, d_syst_fake[systKey][label_fake]["syst_mean"]
-            l_systRow.append(r"$ \pm %0.2f \ \%% $" %(d_syst_fake[systKey][label_fake]["syst_mean"]))
+            print systKey, label_fake, d_syst_fake[systKey][label_fake][eraStr]["syst_mean"]
+            l_systRow.append(r"$ \pm %0.2g \%% $" %(d_syst_fake[systKey][label_fake][eraStr]["syst_mean"]))
             
-            l_syst_temp = copy.deepcopy(d_syst_fake[systKey][label_fake]["syst"])
+            l_syst_temp = copy.deepcopy(d_syst_fake[systKey][label_fake][eraStr]["syst"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
         
         # Asymmetric
         else :
             
-            print systKey, label_fake, d_syst_fake[systKey][label_fake]["systUp_mean"], d_syst_fake[systKey][label_fake]["systDown_mean"]
-            #l_systRow.append(r"$ %0.2f, \ %0.2f \ \%% $" %(d_syst_fake[systKey][label_fake]["systUp_mean"], d_syst_fake[systKey][label_fake]["systDown_mean"]))
-            l_systRow.append(r"\vtop{\hbox{\strut $ %+0.2f \ \%% $}\hbox{\strut $ %+0.2f \ \%% $}}" %(d_syst_fake[systKey][label_fake]["systUp_mean"], d_syst_fake[systKey][label_fake]["systDown_mean"]))
+            minPreci = Common.getMinPrecision([
+                "%0.2g" %(d_syst_fake[systKey][label_fake][eraStr]["systUp_mean"]),
+                "%0.2g" %(d_syst_fake[systKey][label_fake][eraStr]["systDown_mean"]),
+            ])
             
-            l_syst_temp = copy.deepcopy(d_syst_fake[systKey][label_fake]["systUp"] + d_syst_fake[systKey][label_fake]["systDown"])
+            print systKey, label_fake, d_syst_fake[systKey][label_fake][eraStr]["systUp_mean"], d_syst_fake[systKey][label_fake][eraStr]["systDown_mean"]
+            #l_systRow.append(r"$ %0.2g, \ %0.2g \%% $" %(d_syst_fake[systKey][label_fake]["systUp_mean"], d_syst_fake[systKey][label_fake]["systDown_mean"]))
+            l_systRow.append(r"\vtop{\hbox{\strut $ %s \%% $}\hbox{\strut $ %s \%% $}}" %(
+                Common.formatNumberMin(d_syst_fake[systKey][label_fake][eraStr]["systUp_mean"], minVal = 0.1, nDecimal = minPreci),
+                Common.formatNumberMin(d_syst_fake[systKey][label_fake][eraStr]["systDown_mean"], minVal = 0.1, nDecimal = minPreci),
+            ))
+            
+            l_syst_temp = copy.deepcopy(d_syst_fake[systKey][label_fake][eraStr]["systUp"] + d_syst_fake[systKey][label_fake][eraStr]["systDown"])
             l_syst_temp = [abs(ele) for ele in l_syst_temp if (abs(ele) > 0)]
             
             if (min(l_syst_temp) == max(l_syst_temp)) :
                 
-                l_systRow_range.append(r"$ %0.2f \ \%% $" %(min(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \%% $" %(min(l_syst_temp)))
             
             else :
                 
-                l_systRow_range.append(r"$ %0.2f \ \text{-} \ %0.2f \ \%% $" %(min(l_syst_temp), max(l_syst_temp)))
+                l_systRow_range.append(r"$ %0.2g \ \text{-} \ %0.2g \%% $" %(min(l_syst_temp), max(l_syst_temp)))
         
         print "\n"
         
@@ -2578,8 +2967,8 @@ if (args.syst) :
     
     l_header = ["Uncertainty source"]
     #l_header += [r"$ x=%s, [%d, %d] $" %(sig_x_str, key[0], key[1]) for key in l_massPointYieldHist]
-    l_header += [r"\vtop{\hbox{\strut $ x=%s $}\hbox{\strut $ [%d, %d] $}}" %(sig_x_str, key[0], key[1]) for key in l_massPointYieldHist]
-    l_header += [r"$ t \overline{t} $", "DY+jets", "Other SM", "Fake"]
+    l_header += [r"\vtop{\hbox{\strut $ x = %s $}\hbox{\strut $ [%d, %d] $}}" %(sig_x_str, key[0], key[1]) for key in l_massPointYieldHist]
+    l_header += [r"$ \ttbar $", "DY+jets", "Other SM", r"Misid. \tauh"]
     
     systTableStr = tabulate.tabulate(
         l_systTable,
@@ -2610,7 +2999,7 @@ if (args.syst) :
         adjustBox = False,
     )
     
-    systTableDir = "systematicsTables/%s" %(era)
+    systTableDir = "systematicsTables/%s" %("+".join(l_era))
     os.system("mkdir -p %s" %(systTableDir))
     
     systTableFile = "%s/systTable_%s_tex.txt" %(systTableDir, sig_x_str_fileName)
@@ -2636,7 +3025,7 @@ if (args.syst) :
         columnHorOrientDict = {0: "l"}
     )
     
-    systTableDir = "systematicsTables/%s" %(era)
+    systTableDir = "systematicsTables/%s" %("+".join(l_era))
     os.system("mkdir -p %s" %(systTableDir))
     
     systTableFile_range = "%s/systTable_range_%s_tex.txt" %(systTableDir, sig_x_str_fileName)
@@ -2669,6 +3058,14 @@ def getYieldHist(yieldResult) :
 
 
 if (args.SRyield) :
+    
+    
+    yieldResult_data = Common.getEraCombinedYields([d_yieldResult_data[era] for era in l_era])
+    
+    yieldResult_nominal_ttbar = Common.getEraCombinedYields([d_yieldResult_nominal_ttbar[era] for era in l_era])
+    yieldResult_nominal_DYJetsToLL = Common.getEraCombinedYields([d_yieldResult_nominal_DYJetsToLL[era] for era in l_era])
+    yieldResult_nominal_otherSM = Common.getEraCombinedYields([d_yieldResult_nominal_otherSM[era] for era in l_era])
+    yieldResult_nominal_fake = Common.getEraCombinedYields([d_yieldResult_nominal_fake[era] for era in l_era])
     
     ##### Yield table #####
     
@@ -2712,7 +3109,39 @@ if (args.SRyield) :
     l_totalBkg_systErrPos = [0 for i in range(0, nSR_merged)]
     l_totalBkg_systErrNeg = [0 for i in range(0, nSR_merged)]
     
+    l_bkg_label = []
+    
+    
+    #a_sig_yield = numpy.zeros((nSR_merged, len(l_massPointYieldHist)))
+    #a_sig_statErrPos = numpy.zeros((nSR_merged, len(l_massPointYieldHist)))
+    #a_sig_statErrNeg = numpy.zeros((nSR_merged, len(l_massPointYieldHist)))
+    #a_sig_systErrPos = numpy.zeros((nSR_merged, len(l_massPointYieldHist)))
+    #a_sig_systErrNeg = numpy.zeros((nSR_merged, len(l_massPointYieldHist)))
+    
+    #a_bkg_yield = numpy.zeros((nSR_merged, nBackground))
+    #a_bkg_statErrPos = numpy.zeros((nSR_merged, nBackground))
+    #a_bkg_statErrNeg = numpy.zeros((nSR_merged, nBackground))
+    #a_bkg_systErrPos = numpy.zeros((nSR_merged, nBackground))
+    #a_bkg_systErrNeg = numpy.zeros((nSR_merged, nBackground))
+    
+    
     for iSR in range(0, nSR_merged) :
+        
+        #l_err_temp = []
+        #
+        #for iEra in range(0, len(l_era)) :
+        #    
+        #    era = l_era[iEra]
+        #    eraStr = "_%s" %(era)
+        #    
+        #    l_err_temp.append(
+        #        d_systCombined[label_ttbar][era]["stat"][iSR]
+        #    )
+        #
+        #d_systCombined[label_ttbar]["stat"][iSR] = Common.getCombinedError(l_err_temp)#, sign = +1)
+        
+        #Common.getEraCombinedError(l_systInfo = d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = xxx)
+        
         
         l_row = []
         l_header = []
@@ -2720,7 +3149,7 @@ if (args.SRyield) :
         l_row_sig = []
         l_header_sig = []
         
-        l_header.append("SR bin")
+        l_header.append("SR")
         l_row.append("%d" %(iSR+1))
         
         l_header_sig.append("SR bin")
@@ -2728,211 +3157,379 @@ if (args.SRyield) :
         
         
         # Prediction
-        allSM = yieldResult_nominal_ttbar["yield"][iSR] + yieldResult_nominal_DYJetsToLL["yield"][iSR] + yieldResult_nominal_otherSM["yield"][iSR] + yieldResult_nominal_fake["yield"][iSR]
+        allSM = 0
+        allSM_statPos = 0
+        allSM_statNeg = 0
+        
+        #allSM = (
+        #    yieldResult_nominal_ttbar["yield"][iSR] +
+        #    yieldResult_nominal_DYJetsToLL["yield"][iSR] +
+        #    yieldResult_nominal_otherSM["yield"][iSR] +
+        #    yieldResult_nominal_fake["yield"][iSR]
+        #)
         
         
         # ttbar
+        if (iSR == 0) :
+            
+            l_bkg_label.append(label_ttbar)
+        
         statSign = "+" if (yieldResult_nominal_ttbar["yield"][iSR] == 0) else "\pm"
         
         l_header.append(r"$ \ttbar $")
         
         yieldStr = ""
         
+        l_eraYield_ttbar = [d_yieldResult_nominal_ttbar[era]["yield"][iSR] for era in l_era]
+        
+        statPos_ttbar = 0
+        
         if (yieldResult_nominal_ttbar["yield"][iSR] == 0) :
             
-            #yieldStr = r"$ < %0.2f \ (0 \ \%%) $" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ < %0.2f $ \\ ($ 0 \ \%% $) \end{tabular}" %(
-                d_systCombined[label_ttbar]["stat"][iSR]
+            statPos_ttbar = Common.getEraCombinedError(d_systCombined[label_ttbar]["stat"][iSR], sign = +1, l_yield = l_eraYield_ttbar)
+            
+            #yieldStr = r"$ < %0.1f \ (0 \%%) $" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ < %0.1f $ \\ ($ 0 \%% $) \end{tabular}" %(
+            #yieldStr = r"$ < %0.1f $" %(
+            yieldStr = r"$ 0.0 ^{+%0.1f +0.0} _{-0.0 -0.0} $" %(
+                statPos_ttbar
             )
         
         else :
             
-            #yieldStr = r"$ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} \ (%d \ \%%) $" %(
-            #yieldStr = r"\vtop{\hbox{\strut $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $}\hbox{\strut ($ %d \ \%% $)}}" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $ \\ ($ %d \ \%% $) \end{tabular}" %(
-                yieldResult_nominal_ttbar["yield"][iSR],
-                statSign,
-                d_systCombined[label_ttbar]["stat"][iSR],
-                Common.getCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = +1),
-                Common.getCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = -1),
-                round(yieldResult_nominal_ttbar["yield"][iSR] / allSM * 100.0)
+            statPos_ttbar = Common.getEraCombinedError(d_systCombined[label_ttbar]["stat"][iSR], sign = +1)
+            
+            minPreci = Common.getMinPrecision(["%0.2g" %(float("%0.1f" %(yieldResult_nominal_ttbar["yield"][iSR])))], zeroRemovalThresh = 2)
+            
+            #yieldStr = r"$ %0.1f %s %0.1f ^{+%0.1f} _{-%0.1f} \ (%d \%%) $" %(
+            #yieldStr = r"\vtop{\hbox{\strut $ %0.1f %s %0.1f ^{+%0.1f} _{-%0.1f} $}\hbox{\strut ($ %d \%% $)}}" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $ \\ ($ %d \%% $) \end{tabular}" %(
+            yieldStr = r"$ %0.*f ^{+%0.*f +%0.*f} _{-%0.*f -%0.*f} $" %(
+                minPreci, yieldResult_nominal_ttbar["yield"][iSR],
+                #statSign,
+                minPreci, statPos_ttbar,
+                minPreci, Common.getEraCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = +1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_ttbar]["stat"][iSR], sign = -1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = -1),
+                #round(yieldResult_nominal_ttbar["yield"][iSR] / allSM * 100.0)
             )
         
         l_row.append(yieldStr)
         
-        l_bkg_yield[0] += yieldResult_nominal_ttbar["yield"][iSR]
-        l_bkg_statErr[0] += d_systCombined[label_ttbar]["stat"][iSR]**2
-        l_bkg_statErrPos[0] += d_systCombined[label_ttbar]["stat"][iSR]**2
-        l_bkg_statErrNeg[0] += d_systCombined[label_ttbar]["stat"][iSR]**2 * (abs(yieldResult_nominal_ttbar["yield"][iSR]) > 0)
-        l_bkg_systErrPos[0] += Common.getCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = +1)**2
-        l_bkg_systErrNeg[0] += Common.getCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = -1)**2
+        statNeg_ttbar = Common.getEraCombinedError(d_systCombined[label_ttbar]["stat"][iSR], sign = -1)
+        systPos_ttbar = Common.getEraCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = +1)
+        systNeg_ttbar = Common.getEraCombinedError(d_systCombined[label_ttbar]["syst"][iSR], sign = -1)
+        
+        l_bkg_yield[0] += float("%0.*f" %(minPreci, yieldResult_nominal_ttbar["yield"][iSR]))
+        l_bkg_statErr[0] += Common.getEraCombinedError(d_systCombined[label_ttbar]["stat"][iSR], sign = +1)**2
+        l_bkg_statErrPos[0] += statPos_ttbar**2
+        l_bkg_statErrNeg[0] += statNeg_ttbar**2
+        l_bkg_systErrPos[0] += systPos_ttbar**2
+        l_bkg_systErrNeg[0] += systNeg_ttbar**2
+        
+        allSM += float("%0.*f" %(minPreci, yieldResult_nominal_ttbar["yield"][iSR]))
+        
+        allSM_statPos += statPos_ttbar**2
+        
+        #a_bkg_yield[iSR][0] = yieldResult_nominal_ttbar["yield"][iSR]
+        #a_bkg_statErrPos[iSR][0] = statPos_ttbar
+        #a_bkg_statErrNeg[iSR][0] = statNeg_ttbar
+        #a_bkg_systErrPos[iSR][0] = systPos_ttbar
+        #a_bkg_systErrNeg[iSR][0] = systNeg_ttbar
         
         
         # DY
+        if (iSR == 0) :
+            
+            l_bkg_label.append(label_DYJetsToLL)
+        
         statSign = "+" if (yieldResult_nominal_DYJetsToLL["yield"][iSR] == 0) else "\pm"
         
         l_header.append(r"DY+jets")
         
         yieldStr = ""
         
+        l_eraYield_DYJetsToLL = [d_yieldResult_nominal_DYJetsToLL[era]["yield"][iSR] for era in l_era]
+        
+        statPos_DYJetsToLL = 0
+        
         if (yieldResult_nominal_DYJetsToLL["yield"][iSR] == 0) :
             
-            #yieldStr = r"$ < %0.2f \ (0 \ \%%) $" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ < %0.2f $ \\ ($ 0 \ \%% $) \end{tabular}" %(
-                d_systCombined[label_DYJetsToLL]["stat"][iSR]
+            statPos_DYJetsToLL = Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["stat"][iSR], sign = +1, l_yield = l_eraYield_DYJetsToLL)
+            
+            #yieldStr = r"$ < %0.1f \ (0 \%%) $" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ < %0.1f $ \\ ($ 0 \%% $) \end{tabular}" %(
+            #yieldStr = r"$ < %0.1f $" %(
+            yieldStr = r"$ 0.0 ^{+%0.1f +0.0} _{-0.0 -0.0} $" %(
+                statPos_DYJetsToLL
             )
         
         else :
             
-            #yieldStr = r"$ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} \ (%d \ \%%) $" %(
-            #yieldStr = r"\vtop{\hbox{\strut $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $}\hbox{\strut ($ %d \ \%% $)}}" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $ \\ ($ %d \ \%% $) \end{tabular}" %(
-                yieldResult_nominal_DYJetsToLL["yield"][iSR],
-                statSign,
-                d_systCombined[label_DYJetsToLL]["stat"][iSR],
-                Common.getCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = +1),
-                Common.getCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = -1),
-                round(yieldResult_nominal_DYJetsToLL["yield"][iSR] / allSM * 100.0)
+            statPos_DYJetsToLL = Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["stat"][iSR], sign = +1)
+            
+            minPreci = Common.getMinPrecision(["%0.2g" %(float("%0.1f" %(yieldResult_nominal_DYJetsToLL["yield"][iSR])))], zeroRemovalThresh = 2)
+            
+            #yieldStr = r"$ %0.1f %s %0.1f ^{+%0.1f} _{-%0.1f} \ (%d \%%) $" %(
+            #yieldStr = r"\vtop{\hbox{\strut $ %0.1f %s %0.1f ^{+%0.1f} _{-%0.1f} $}\hbox{\strut ($ %d \%% $)}}" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $ \\ ($ %d \%% $) \end{tabular}" %(
+            yieldStr = r"$ %0.*f ^{+%0.*f +%0.*f} _{-%0.*f -%0.*f} $" %(
+                minPreci, yieldResult_nominal_DYJetsToLL["yield"][iSR],
+                #statSign,
+                minPreci, statPos_DYJetsToLL,
+                minPreci, Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = +1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["stat"][iSR], sign = -1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = -1),
+                #round(yieldResult_nominal_DYJetsToLL["yield"][iSR] / allSM * 100.0)
             )
         
         l_row.append(yieldStr)
         
-        l_bkg_yield[1] += yieldResult_nominal_DYJetsToLL["yield"][iSR]
-        l_bkg_statErr[1] += d_systCombined[label_DYJetsToLL]["stat"][iSR]**2
-        l_bkg_statErrPos[1] += d_systCombined[label_DYJetsToLL]["stat"][iSR]**2
-        l_bkg_statErrNeg[1] += d_systCombined[label_DYJetsToLL]["stat"][iSR]**2 * (abs(yieldResult_nominal_DYJetsToLL["yield"][iSR]) > 0)
-        l_bkg_systErrPos[1] += Common.getCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = +1)**2
-        l_bkg_systErrNeg[1] += Common.getCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = -1)**2
+        statNeg_DYJetsToLL = Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["stat"][iSR], sign = -1)
+        systPos_DYJetsToLL = Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = +1)
+        systNeg_DYJetsToLL = Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["syst"][iSR], sign = -1)
+        
+        l_bkg_yield[1] += float("%0.*f" %(minPreci, yieldResult_nominal_DYJetsToLL["yield"][iSR]))
+        l_bkg_statErr[1] += Common.getEraCombinedError(d_systCombined[label_DYJetsToLL]["stat"][iSR])**2
+        l_bkg_statErrPos[1] += statPos_DYJetsToLL**2
+        l_bkg_statErrNeg[1] += statNeg_DYJetsToLL**2
+        l_bkg_systErrPos[1] += systPos_DYJetsToLL**2
+        l_bkg_systErrNeg[1] += systNeg_DYJetsToLL**2
+        
+        allSM += float("%0.*f" %(minPreci, yieldResult_nominal_DYJetsToLL["yield"][iSR]))
+        
+        allSM_statPos += statPos_DYJetsToLL**2
+        
+        #a_bkg_yield[iSR][1] = yieldResult_nominal_DYJetsToLL["yield"][iSR]
+        #a_bkg_statErrPos[iSR][1] = statPos_DYJetsToLL
+        #a_bkg_statErrNeg[iSR][1] = statNeg_DYJetsToLL
+        #a_bkg_systErrPos[iSR][1] = systPos_DYJetsToLL
+        #a_bkg_systErrNeg[iSR][1] = systNeg_DYJetsToLL
         
         
         # Other SM
+        if (iSR == 0) :
+            
+            l_bkg_label.append(label_otherSM)
+        
         statSign = "+" if (yieldResult_nominal_otherSM["yield"][iSR] == 0) else "\pm"
         
         l_header.append(r"Other SM")
         
         yieldStr = ""
         
-        if (yieldResult_nominal_otherSM["yield"][iSR]  == 0) :
+        l_eraYield_otherSM = [d_yieldResult_nominal_otherSM[era]["yield"][iSR] for era in l_era]
+        
+        statPos_otherSM = 0
+        
+        if (yieldResult_nominal_otherSM["yield"][iSR] == 0) :
             
-            #yieldStr = r"$ < %0.2f \ (0 \ \%%) $" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ < %0.2f $ \\ ($ 0 \ \%% $) \end{tabular}" %(
-                d_systCombined[label_otherSM]["stat"][iSR]
+            statPos_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["stat"][iSR], sign = +1, l_yield = l_eraYield_otherSM)
+            
+            #yieldStr = r"$ < %0.1f \ (0 \%%) $" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ < %0.1f $ \\ ($ 0 \%% $) \end{tabular}" %(
+            #yieldStr = r"$ < %0.1f $" %(
+            yieldStr = r"$ 0.0 ^{+%0.1f +0.0} _{-0.0 -0.0} $" %(
+                statPos_otherSM
             )
         
         else :
             
-            #yieldStr = r"$ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} \ (%d \ \%%) $" %(
-            #yieldStr = r"\vtop{\hbox{\strut $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $}\hbox{\strut ($ %d \ \%% $)}}" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $ \\ ($ %d \ \%% $) \end{tabular}" %(
-                yieldResult_nominal_otherSM["yield"][iSR],
-                statSign,
-                d_systCombined[label_otherSM]["stat"][iSR],
-                Common.getCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = +1),
-                Common.getCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = -1),
-                round(yieldResult_nominal_otherSM["yield"][iSR] / allSM * 100.0)
+            statPos_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["stat"][iSR], sign = +1)
+            
+            minPreci = Common.getMinPrecision(["%0.2g" %(float("%0.1f" %(yieldResult_nominal_otherSM["yield"][iSR])))], zeroRemovalThresh = 2)
+            
+            #yieldStr = r"$ %0.1f %s %0.1f ^{+%0.1f} _{-%0.1f} \ (%d \%%) $" %(
+            #yieldStr = r"\vtop{\hbox{\strut $ %0.1f %s %0.1f ^{+%0.1f} _{-%0.1f} $}\hbox{\strut ($ %d \%% $)}}" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $ \\ ($ %d \%% $) \end{tabular}" %(
+            yieldStr = r"$ %0.*f ^{+%0.*f +%0.*f} _{-%0.*f -%0.*f} $" %(
+                minPreci, yieldResult_nominal_otherSM["yield"][iSR],
+                #statSign,
+                minPreci, statPos_otherSM,
+                minPreci, Common.getEraCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = +1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_otherSM]["stat"][iSR], sign = -1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = -1),
+                #round(yieldResult_nominal_otherSM["yield"][iSR] / allSM * 100.0)
             )
         
         l_row.append(yieldStr)
         
-        l_bkg_yield[2] += yieldResult_nominal_otherSM["yield"][iSR]
-        l_bkg_statErr[2] += d_systCombined[label_otherSM]["stat"][iSR]**2
-        l_bkg_statErrPos[2] += d_systCombined[label_otherSM]["stat"][iSR]**2
-        l_bkg_statErrNeg[2] += d_systCombined[label_otherSM]["stat"][iSR]**2 * (abs(yieldResult_nominal_otherSM["yield"][iSR]) > 0)
-        l_bkg_systErrPos[2] += Common.getCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = +1)**2
-        l_bkg_systErrNeg[2] += Common.getCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = -1)**2
+        statNeg_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["stat"][iSR], sign = -1)
+        systPos_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = +1)
+        systNeg_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = -1)
+        
+        l_bkg_yield[2] += float("%0.*f" %(minPreci, yieldResult_nominal_otherSM["yield"][iSR]))
+        l_bkg_statErr[2] += Common.getEraCombinedError(d_systCombined[label_otherSM]["stat"][iSR])**2
+        l_bkg_statErrPos[2] += statPos_otherSM**2
+        l_bkg_statErrNeg[2] += statNeg_otherSM**2
+        l_bkg_systErrPos[2] += systPos_otherSM**2
+        l_bkg_systErrNeg[2] += systNeg_otherSM**2
+        
+        allSM += float("%0.*f" %(minPreci, yieldResult_nominal_otherSM["yield"][iSR]))
+        
+        allSM_statPos += statPos_otherSM**2
+        
+        #a_bkg_yield[iSR][2] = yieldResult_nominal_otherSM["yield"][iSR]
+        #a_bkg_statErrPos[iSR][2] = statPos_otherSM
+        #a_bkg_statErrNeg[iSR][2] = statNeg_otherSM
+        #a_bkg_systErrPos[iSR][2] = systPos_otherSM
+        #a_bkg_systErrNeg[iSR][2] = systNeg_otherSM
         
         
         # Fake
-        l_header.append(r"Fake")
+        if (iSR == 0) :
+            
+            l_bkg_label.append(label_fake)
+        
+        l_header.append(r"Misid. \tauh")
         
         yieldStr = ""
         
+        l_eraYield_fake = [d_yieldResult_nominal_fake[era]["yield"][iSR] for era in l_era]
+        
+        statPos_fake = 0
+        
         if (yieldResult_nominal_fake["yield"][iSR] == 0) :
             
-            yieldStr = r"\begin{tabular}[t]{c} $ %0.2f $ \\ ($ 0 \ \%% $) \end{tabular}" %(d_systCombined[label_fake]["stat"][iSR])
+            statPos_fake = Common.getEraCombinedError(d_systCombined[label_fake]["stat"][iSR], sign = +1, l_yield = l_eraYield_fake)
+            
+            #yieldStr = r"\begin{tabular}[t]{c} $ %0.1f $ \\ ($ 0 \%% $) \end{tabular}" %(
+            yieldStr = r"$ 0.0 ^{+%0.1f +0.0} _{-0.0 -0.0} $" %(
+                statPos_fake
+            )
+            #yieldStr = r"$ 0.0 ^{+0.0 +0.0} _{-0.0 -0.0} $"
+            #yieldStr = r"\NA"
         
         else :
             
-            #yieldStr = r"$ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} \ (%d \ \%%) $" %(
-            #yieldStr = r"\vtop{\hbox{\strut $ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} $}\hbox{\strut ($ %d \ \%% $)}}" %(
-            yieldStr = r"\begin{tabular}[t]{c} $ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} $ \\ ($ %d \ \%% $) \end{tabular}" %(
-                yieldResult_nominal_fake["yield"][iSR],
-                d_systCombined[label_fake]["stat"][iSR],
-                Common.getCombinedError(d_systCombined[label_fake]["syst"][iSR], sign = +1),
-                Common.getCombinedError(d_systCombined[label_fake]["syst"][iSR], sign = -1),
-                round(yieldResult_nominal_fake["yield"][iSR] / allSM * 100.0)
+            statPos_fake = Common.getEraCombinedError(d_systCombined[label_fake]["stat"][iSR], sign = +1)
+            
+            minPreci = Common.getMinPrecision(["%0.2g" %(float("%0.1f" %(yieldResult_nominal_fake["yield"][iSR])))], zeroRemovalThresh = 2)
+            
+            #yieldStr = r"$ %0.1f \pm %0.1f ^{+%0.1f} _{-%0.1f} \ (%d \%%) $" %(
+            #yieldStr = r"\vtop{\hbox{\strut $ %0.1f \pm %0.1f ^{+%0.1f} _{-%0.1f} $}\hbox{\strut ($ %d \%% $)}}" %(
+            #yieldStr = r"\begin{tabular}[t]{c} $ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $ \\ ($ %d \%% $) \end{tabular}" %(
+            yieldStr = r"$ %0.*f ^{+%0.*f +%0.*f} _{-%0.*f -%0.*f} $" %(
+                minPreci, yieldResult_nominal_fake["yield"][iSR],
+                minPreci, statPos_fake,
+                minPreci, Common.getEraCombinedError(d_systCombined[label_fake]["syst"][iSR], sign = +1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_fake]["stat"][iSR], sign = -1),
+                minPreci, Common.getEraCombinedError(d_systCombined[label_fake]["syst"][iSR], sign = -1),
+                #round(yieldResult_nominal_fake["yield"][iSR] / allSM * 100.0)
             )
         
         l_row.append(yieldStr)
         
-        l_bkg_yield[3] += yieldResult_nominal_fake["yield"][iSR]
-        l_bkg_statErr[3] += d_systCombined[label_fake]["stat"][iSR]**2
-        l_bkg_statErrPos[3] += d_systCombined[label_fake]["stat"][iSR]**2
-        l_bkg_statErrNeg[3] += d_systCombined[label_fake]["stat"][iSR]**2 * (abs(yieldResult_nominal_fake["yield"][iSR]) > 0)
-        l_bkg_systErrPos[3] += Common.getCombinedError(d_systCombined[label_fake]["syst"][iSR], sign = +1)**2
-        l_bkg_systErrNeg[3] += Common.getCombinedError(d_systCombined[label_fake]["syst"][iSR], sign = -1)**2
+        statNeg_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["stat"][iSR], sign = -1)
+        systPos_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = +1)
+        systNeg_otherSM = Common.getEraCombinedError(d_systCombined[label_otherSM]["syst"][iSR], sign = -1)
+        
+        l_bkg_yield[3] += float("%0.*f" %(minPreci, yieldResult_nominal_fake["yield"][iSR]))
+        l_bkg_statErr[3] += Common.getEraCombinedError(d_systCombined[label_fake]["stat"][iSR])**2
+        l_bkg_statErrPos[3] += statPos_fake**2
+        l_bkg_statErrNeg[3] += statNeg_otherSM**2
+        l_bkg_systErrPos[3] += systPos_otherSM**2
+        l_bkg_systErrNeg[3] += systNeg_otherSM**2
+        
+        allSM += float("%0.*f" %(minPreci, yieldResult_nominal_fake["yield"][iSR]))
+        
+        allSM_statPos += statPos_fake**2
+        
+        #a_bkg_yield[iSR][3] = yieldResult_nominal_otherSM["yield"][iSR]
+        #a_bkg_statErrPos[iSR][3] = statPos_otherSM
+        #a_bkg_statErrNeg[iSR][3] = statNeg_otherSM
+        #a_bkg_systErrPos[iSR][3] = systPos_otherSM
+        #a_bkg_systErrNeg[iSR][3] = systNeg_otherSM
         
         
         #####
-        allSM_stat = Common.getCombinedError([
-            d_systCombined[label_ttbar]["stat"][iSR],
-            d_systCombined[label_DYJetsToLL]["stat"][iSR],
-            d_systCombined[label_otherSM]["stat"][iSR],
+        allSM_stat = Common.getEraCombinedError(
+            d_systCombined[label_ttbar]["stat"][iSR] +
+            d_systCombined[label_DYJetsToLL]["stat"][iSR] +
+            d_systCombined[label_otherSM]["stat"][iSR] +
             d_systCombined[label_fake]["stat"][iSR],
-        ])
+            treatCorrelated = False
+        )
         
-        allSM_statPos = Common.getCombinedError([
-            d_systCombined[label_ttbar]["stat"][iSR],
-            d_systCombined[label_DYJetsToLL]["stat"][iSR],
-            d_systCombined[label_otherSM]["stat"][iSR],
-            d_systCombined[label_fake]["stat"][iSR],
-        ])
+        
+        l_eraYield_allSM = l_eraYield_ttbar + l_eraYield_DYJetsToLL + l_eraYield_otherSM + l_eraYield_fake
+        
+        #allSM_statPos = Common.getEraCombinedError(
+        #    d_systCombined[label_ttbar]["stat"][iSR] +
+        #    d_systCombined[label_DYJetsToLL]["stat"][iSR] +
+        #    d_systCombined[label_otherSM]["stat"][iSR] +
+        #    d_systCombined[label_fake]["stat"][iSR],
+        #    sign = +1,
+        #    treatCorrelated = False,
+        #    l_yield = l_eraYield_allSM,
+        #)
+        
+        allSM_statPos = numpy.sqrt(allSM_statPos)
+        
+        
+        #if (iSR == 13) :
+        #    
+        #    print l_eraYield_allSM
+        #    print (d_systCombined[label_ttbar]["stat"][iSR] +
+        #        d_systCombined[label_DYJetsToLL]["stat"][iSR] +
+        #        d_systCombined[label_otherSM]["stat"][iSR] +
+        #        d_systCombined[label_fake]["stat"][iSR])
+        #    print allSM_statPos
+        #    exit()
         
         # Do not add the one sided stat errors for the zero bins to the negative error
-        allSM_statNeg = Common.getCombinedError([
-            d_systCombined[label_ttbar]["stat"][iSR] * (abs(yieldResult_nominal_ttbar["yield"][iSR]) > 0),
-            d_systCombined[label_DYJetsToLL]["stat"][iSR] * (abs(yieldResult_nominal_DYJetsToLL["yield"][iSR]) > 0),
-            d_systCombined[label_otherSM]["stat"][iSR] * (abs(yieldResult_nominal_otherSM["yield"][iSR]) > 0),
-            d_systCombined[label_fake]["stat"][iSR] * (abs(yieldResult_nominal_fake["yield"][iSR]) > 0),
-        ])
+        allSM_statNeg = Common.getEraCombinedError(
+            d_systCombined[label_ttbar]["stat"][iSR] +
+            d_systCombined[label_DYJetsToLL]["stat"][iSR] +
+            d_systCombined[label_otherSM]["stat"][iSR] +
+            d_systCombined[label_fake]["stat"][iSR],
+            sign = -1,
+            treatCorrelated = False,
+        )
         
-        allSM_systPos = Common.getCombinedError(
+        allSM_systPos = Common.getEraCombinedError(
             d_systCombined[label_ttbar]["syst"][iSR] +
             d_systCombined[label_DYJetsToLL]["syst"][iSR] +
             d_systCombined[label_otherSM]["syst"][iSR] +
             d_systCombined[label_fake]["syst"][iSR],
-            sign = +1
+            sign = +1,
+            #treatCorrelated = False
         )
         
-        allSM_systNeg = Common.getCombinedError(
+        allSM_systNeg = Common.getEraCombinedError(
             d_systCombined[label_ttbar]["syst"][iSR] +
             d_systCombined[label_DYJetsToLL]["syst"][iSR] +
             d_systCombined[label_otherSM]["syst"][iSR] +
             d_systCombined[label_fake]["syst"][iSR],
-            sign = -1
+            sign = -1,
+            #treatCorrelated = False
         )
         
+        
+        # Total background
         l_header.append(r"Total bkg.")
         
-        if (allSM_statPos == allSM_statNeg) :
-            
-            l_row.append(r"$ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} $" %(
-                allSM,
-                allSM_statPos,
-                allSM_systPos,
-                allSM_systNeg
-            ))
+        #if (allSM_statPos == allSM_statNeg) :
+        #    
+        #    l_row.append(r"$ %0.1f \pm %0.1f ^{+%0.1f} _{-%0.1f} $" %(
+        #        allSM,
+        #        allSM_statPos,
+        #        allSM_systPos,
+        #        allSM_systNeg
+        #    ))
+        #
+        #else :
         
-        else :
-            
-            l_row.append(r"$ %0.2f ^{+%0.2f +%0.2f} _{-%0.2f -%0.2f} $" %(
-                allSM,
-                #allSM_stat,
-                allSM_statPos,
-                allSM_systPos,
-                allSM_statNeg,
-                allSM_systNeg
-            ))
+        minPreci = Common.getMinPrecision(["%0.2g" %(float("%0.1f" %(allSM)))], zeroRemovalThresh = 2)
+        
+        l_row.append(r"$ %0.*f ^{+%0.*f +%0.*f} _{-%0.*f -%0.*f} $" %(
+            minPreci, allSM,
+            #allSM_stat,
+            minPreci, allSM_statPos,
+            minPreci, allSM_systPos,
+            minPreci, allSM_statNeg,
+            minPreci, allSM_systNeg
+        ))
         
         
         totalBkg_yield += allSM
@@ -2961,10 +3558,10 @@ if (args.SRyield) :
         #    
         #    #l_header.append(r"$ x=%s, [%d, %d] \ (\frac{S}{S+B}) $" %(sig_x_str, key[0], key[1]))
         #    l_header.append(r"$ x=%s, [%d, %d] $" %(sig_x_str, key[0], key[1]))
-        #    l_row.append("%0.2f \ (%0.2f)" %(yieldResult["yield"][iSR], yieldResult["yield"][iSR] / (yieldResult["yield"][iSR]+allSM)))
+        #    l_row.append("%0.1f \ (%0.1f)" %(yieldResult["yield"][iSR], yieldResult["yield"][iSR] / (yieldResult["yield"][iSR]+allSM)))
         #    
         #    #l_header.append(r"\frac{S}{S+B}")
-        #    #l_row.append("%0.2f" %(yieldResult["yield"][iSR] / (yieldResult["yield"][iSR]+allSM)))
+        #    #l_row.append("%0.1f" %(yieldResult["yield"][iSR] / (yieldResult["yield"][iSR]+allSM)))
         
         
         # Significance
@@ -2977,7 +3574,7 @@ if (args.SRyield) :
             )
             
             l_header.append(r"Significance")
-            l_row.append("$ %0.2f $" %(
+            l_row.append("$ %0.1f $" %(
                 significance,
             ))
         
@@ -2997,11 +3594,12 @@ if (args.SRyield) :
             
             key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
             
-            yieldResult = d_massPointYieldHist[key]
+            yieldResult = Common.getEraCombinedYields([d_massPointYieldHist[key][era] for era in l_era])
+            #yieldResult = d_massPointYieldHist[key]
             
             statSign = "+" if (yieldResult["yield"][iSR] == 0) else "\pm"
             
-            l_header_sig.append(r"$ x=%s, [%d, %d] $" %(sig_x_str, key[0], key[1]))
+            l_header_sig.append(r"$ x = %s, [%d, %d] $" %(sig_x_str, key[0], key[1]))
             
             yieldStr = ""
             
@@ -3030,39 +3628,56 @@ if (args.SRyield) :
             #if (SbySB > 0.5) :
             if (SbySB > 1) :
                 
-                SbySB_str = r"\boldmath{$ (%0.2f) $}" %(SbySB)
+                SbySB_str = r"\boldmath{$ (%0.1f) $}" %(SbySB)
             
             else :
                 
-                SbySB_str = r"$ (%0.2f) $" %(SbySB)
+                SbySB_str = r"$ (%0.1f) $" %(SbySB)
             
+            
+            l_eraYield_sig = [d_massPointYieldHist[key][era]["yield"][iSR] for era in l_era]
+            
+            statPos_sig = 0
             
             if (yieldResult["yield"][iSR] == 0) :
                 
-                #yieldStr = r"\begin{tabular}[t]{c} $ < %0.2f $ \\ %s \end{tabular}" %(
-                yieldStr = r"$ < %0.2f $" %(
-                    d_systCombined_sig[key]["stat"][iSR]
+                statPos_sig = Common.getEraCombinedError(d_systCombined_sig[key]["stat"][iSR], sign = +1, l_yield = l_eraYield_sig)
+                
+                #yieldStr = r"\begin{tabular}[t]{c} $ < %0.1f $ \\ %s \end{tabular}" %(
+                #yieldStr = r"$ < %0.1f $" %(
+                yieldStr = r"$ 0.0 ^{+%0.1f +0.0} _{-0.0 -0.0} $" %(
+                    statPos_sig
                 )
             
             else :
                 
-                yieldStr = r"\begin{tabular}[t]{c} $ %0.2f %s %0.2f ^{+%0.2f} _{-%0.2f} $ \\ %s \end{tabular}" %(
+                statPos_sig = Common.getEraCombinedError(d_systCombined_sig[key]["stat"][iSR], sign = +1)
+                
+                yieldStr = r"$ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $" %(
                     yieldResult["yield"][iSR],
-                    statSign,
-                    d_systCombined_sig[key]["stat"][iSR],
-                    Common.getCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = +1),
-                    Common.getCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = -1),
-                    SbySB_str
+                    statPos_sig,
+                    Common.getEraCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = +1),
+                    Common.getEraCombinedError(d_systCombined_sig[key]["stat"][iSR], sign = -1),
+                    Common.getEraCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = -1),
                 )
+                
+                #yieldStr = r"\begin{tabular}[t]{c} $ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $ \\ %s \end{tabular}" %(
+                #    yieldResult["yield"][iSR],
+                #    statPos_sig,
+                #    Common.getEraCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = +1),
+                #    Common.getEraCombinedError(d_systCombined_sig[key]["stat"][iSR], sign = -1),
+                #    Common.getEraCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = -1),
+                #    SbySB_str
+                #)
             
             l_row_sig.append(yieldStr)
             
             l_sig_yield[iSig] += yieldResult["yield"][iSR]
-            l_sig_statErr[iSig] += d_systCombined_sig[key]["stat"][iSR]**2
-            l_sig_statErrPos[iSig] += d_systCombined_sig[key]["stat"][iSR]**2
-            l_sig_statErrNeg[iSig] += d_systCombined_sig[key]["stat"][iSR]**2 * (abs(yieldResult["yield"][iSR]) > 0)
-            l_sig_systErrPos[iSig] += Common.getCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = +1)**2
-            l_sig_systErrNeg[iSig] += Common.getCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = -1)**2
+            l_sig_statErr[iSig] += Common.getEraCombinedError(d_systCombined_sig[key]["stat"][iSR])**2
+            l_sig_statErrPos[iSig] += statPos_sig**2
+            l_sig_statErrNeg[iSig] += Common.getEraCombinedError(d_systCombined_sig[key]["stat"][iSR], sign = -1)**2
+            l_sig_systErrPos[iSig] += Common.getEraCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = +1)**2
+            l_sig_systErrNeg[iSig] += Common.getEraCombinedError(d_systCombined_sig[key]["syst"][iSR], sign = -1)**2
         
         l_yieldTable_sig.append(l_row_sig)
     
@@ -3087,77 +3702,116 @@ if (args.SRyield) :
     l_bkg_systErrPos = [numpy.sqrt(ele) for ele in l_bkg_systErrPos]
     l_bkg_systErrNeg = [numpy.sqrt(ele) for ele in l_bkg_systErrNeg]
     
-    l_row = [r"\textbf{Total}"]
-    l_row_sig = [r"\textbf{Total}"]
+    l_row = [r"Total"]
+    l_row_sig = [r"Total"]
     
     for iSig in range(0, len(l_massPointYieldHist)) :
         
-        if (l_sig_statErrPos[iSig] == l_sig_statErrNeg[iSig]) :
-            
-            l_row_sig.append(r"\boldmath{$ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} $}" %(
-                l_sig_yield[iSig],
-                l_sig_statErrPos[iSig],
-                l_sig_systErrPos[iSig],
-                l_sig_systErrNeg[iSig]
-            ))
+        key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
         
-        else :
+        l_temp = []
+        
+        for iSR in range(0, nSR_merged) :
             
-            l_row_sig.append(r"\boldmath{$ %0.2f ^{+%0.2f +%0.2f} _{-%0.2f -%0.2f} $}" %(
-                l_sig_yield[iSig],
-                #l_sig_statErr[iSig],
-                l_sig_statErrPos[iSig],
-                l_sig_systErrPos[iSig],
-                l_sig_statErrNeg[iSig],
-                l_sig_systErrNeg[iSig]
-            ))
+            l_temp.extend(d_systCombined_sig[key]["syst"][iSR])
+        
+        systErrPos = Common.getEraCombinedError(l_temp, sign = +1)
+        systErrNeg = Common.getEraCombinedError(l_temp, sign = -1)
+        
+        #if (l_sig_statErrPos[iSig] == l_sig_statErrNeg[iSig]) :
+        #    
+        #    l_row_sig.append(r"\boldmath{$ %0.1f \pm %0.1f ^{+%0.1f} _{-%0.1f} $}" %(
+        #        l_sig_yield[iSig],
+        #        l_sig_statErrPos[iSig],
+        #        l_sig_systErrPos[iSig],
+        #        l_sig_systErrNeg[iSig]
+        #    ))
+        #
+        #else :
+        
+        l_row_sig.append(r"$ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $" %(
+            l_sig_yield[iSig],
+            l_sig_statErrPos[iSig],
+            #l_sig_systErrPos[iSig],
+            systErrPos,
+            l_sig_statErrNeg[iSig],
+            #l_sig_systErrNeg[iSig],
+            systErrNeg,
+        ))
     
     l_yieldTable_sig.append(l_row_sig)
     
     
+    totalBkg_systErrPos = 0
+    totalBkg_systErrNeg = 0
+    
+    l_bkg_systErrPos_comb = []
+    
     for iBkg in range(0, len(l_bkg_yield)) :
         
-        if (l_bkg_statErrPos[iBkg] == l_bkg_statErrNeg[iBkg]) :
+        bkg_label = l_bkg_label[iBkg]
+        
+        l_temp = []
+        
+        for iSR in range(0, nSR_merged) :
             
-            l_row.append(r"\boldmath{$ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} $}" %(
-                l_bkg_yield[iBkg],
-                l_bkg_statErrPos[iBkg],
-                l_bkg_systErrPos[iBkg],
-                l_bkg_systErrNeg[iBkg]
-            ))
+            l_temp.extend(d_systCombined[bkg_label]["syst"][iSR])
         
-        else :
-            
-            l_row.append(r"\boldmath{$ %0.2f ^{+%0.2f +%0.2f} _{-%0.2f -%0.2f} $}" %(
-                l_bkg_yield[iBkg],
-                #l_bkg_statErr[iBkg],
-                l_bkg_statErrPos[iBkg],
-                l_bkg_systErrPos[iBkg],
-                l_bkg_statErrNeg[iBkg],
-                l_bkg_systErrNeg[iBkg]
-            ))
-    
-    if (totalBkg_statErrPos == totalBkg_statErrNeg) :
+        systErrPos = Common.getEraCombinedError(l_temp, sign = +1)
+        systErrNeg = Common.getEraCombinedError(l_temp, sign = -1)
         
-        l_row.append(r"\boldmath{$ %0.2f \pm %0.2f ^{+%0.2f} _{-%0.2f} $}" %(
-            totalBkg_yield,
-            totalBkg_statErrPos,
-            totalBkg_systErrPos,
-            totalBkg_systErrNeg
+        totalBkg_systErrPos += systErrPos**2
+        totalBkg_systErrNeg += systErrNeg**2
+        
+        #if (l_bkg_statErrPos[iBkg] == l_bkg_statErrNeg[iBkg]) :
+        #    
+        #    l_row.append(r"\boldmath{$ %0.1f \pm %0.1f ^{+%0.1f} _{-%0.1f} $}" %(
+        #        l_bkg_yield[iBkg],
+        #        l_bkg_statErrPos[iBkg],
+        #        l_bkg_systErrPos[iBkg],
+        #        l_bkg_systErrNeg[iBkg]
+        #    ))
+        #
+        #else :
+        
+        #l_row.append(r"\boldmath{$ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $}" %(
+        l_row.append(r"$ %0.0f ^{+%0.0f +%0.0f} _{-%0.0f -%0.0f} $" %(
+            l_bkg_yield[iBkg],
+            l_bkg_statErrPos[iBkg],
+            #l_bkg_systErrPos[iBkg],
+            systErrPos,
+            l_bkg_statErrNeg[iBkg],
+            #l_bkg_systErrNeg[iBkg],
+            systErrNeg,
         ))
-    
-    else :
         
-        l_row.append(r"\boldmath{$ %0.2f ^{+%0.2f +%0.2f} _{-%0.2f -%0.2f} $}" %(
-            totalBkg_yield,
-            #totalBkg_statErr,
-            totalBkg_statErrPos,
-            totalBkg_systErrPos,
-            totalBkg_statErrNeg,
-            totalBkg_systErrNeg
-        ))
+        
     
-    l_row.append(r"\boldmath{$ %d $}" %(
+    totalBkg_systErrPos = numpy.sqrt(totalBkg_systErrPos)
+    totalBkg_systErrNeg = numpy.sqrt(totalBkg_systErrNeg)
+    
+    #if (totalBkg_statErrPos == totalBkg_statErrNeg) :
+    #    
+    #    l_row.append(r"\boldmath{$ %0.1f \pm %0.1f ^{+%0.1f} _{-%0.1f} $}" %(
+    #        totalBkg_yield,
+    #        totalBkg_statErrPos,
+    #        totalBkg_systErrPos,
+    #        totalBkg_systErrNeg
+    #    ))
+    #
+    #else :
+    
+    #l_row.append(r"\boldmath{$ %0.1f ^{+%0.1f +%0.1f} _{-%0.1f -%0.1f} $}" %(
+    l_row.append(r"$ %0.0f ^{+%0.0f +%0.0f} _{-%0.0f -%0.0f} $" %(
+        totalBkg_yield,
+        #totalBkg_statErr,
+        totalBkg_statErrPos,
+        totalBkg_systErrPos,
+        totalBkg_statErrNeg,
+        totalBkg_systErrNeg
+    ))
+    
+    l_row.append(r"$ %d $" %(
         totalData_yield
     ))
     
@@ -3169,7 +3823,7 @@ if (args.SRyield) :
             totalData_yield
         )
         
-        l_row.append(r"\boldmath{$ %0.2f $}" %(
+        l_row.append(r"$ %0.1f $" %(
             significance,
         ))
     
@@ -3215,7 +3869,7 @@ if (args.SRyield) :
         adjustBox = False,
     )
     
-    systTableDir = "cutFlowTables/%s" %(era)
+    systTableDir = "cutFlowTables/%s" %("+".join(l_era))
     os.system("mkdir -p %s" %(systTableDir))
     
     yieldTableFile = "%s/yieldTable%s_tex.txt" %(systTableDir, "_withSignificance" * args.SRyieldWithSignificance)
@@ -3250,7 +3904,7 @@ if (args.SRyield) :
         adjustBox = False,
     )
     
-    systTableDir = "cutFlowTables/%s" %(era)
+    systTableDir = "cutFlowTables/%s" %("+".join(l_era))
     os.system("mkdir -p %s" %(systTableDir))
     
     yieldTableFile_sig = "%s/yieldTable_sig_%s_tex.txt" %(systTableDir, sig_x_str_fileName)
@@ -3279,28 +3933,28 @@ if (args.SRyield) :
     #
     histDetail_temp = Common.HistogramDetails()
     histDetail_temp.hist = getYieldHist(yieldResult_nominal_ttbar)
-    histDetail_temp.histLabel = "\ttbar"
+    histDetail_temp.histLabel = Details.latex_ttbar
     histDetail_temp.color = Details.color_ttbar
     l_histDetail.append(histDetail_temp)
     
     #
     histDetail_temp = Common.HistogramDetails()
     histDetail_temp.hist = getYieldHist(yieldResult_nominal_DYJetsToLL)
-    histDetail_temp.histLabel = "DY+jets"
+    histDetail_temp.histLabel = Details.latex_DYJetsToLL
     histDetail_temp.color = Details.color_DYJetsToLL
     l_histDetail.append(histDetail_temp)
     
     #
     histDetail_temp = Common.HistogramDetails()
     histDetail_temp.hist = getYieldHist(yieldResult_nominal_otherSM)
-    histDetail_temp.histLabel = "Other SM"
+    histDetail_temp.histLabel = Details.latex_otherSM
     histDetail_temp.color = Details.color_otherSM
     l_histDetail.append(histDetail_temp)
     
     #
     histDetail_temp = Common.HistogramDetails()
     histDetail_temp.hist = getYieldHist(yieldResult_nominal_fake)
-    histDetail_temp.histLabel = "Fake"
+    histDetail_temp.histLabel = "Misid. #tau_{h}"
     histDetail_temp.color = Details.color_QCD
     l_histDetail.append(histDetail_temp)
     
@@ -3345,20 +3999,27 @@ if (args.SRyield) :
         
         key = (l_massPointYieldHist[iSig][0], l_massPointYieldHist[iSig][1])
         
-        yieldResult = d_massPointYieldHist[key]
+        yieldResult = Common.getEraCombinedYields([d_massPointYieldHist[key][era] for era in l_era])
         
         histDetail_temp = Common.HistogramDetails()
         histDetail_temp.hist = getYieldHist(yieldResult)
-        histDetail_temp.histLabel = "x=%s, [%d, %d]" %(sig_x_str, key[0], key[1])
+        histDetail_temp.histLabel = "x = %s, [%d, %d]" %(sig_x_str, key[0], key[1])
         #histDetail_temp.color = ROOT.kMagenta + 2*(iSig+1)
         #histDetail_temp.color = ROOT.kMagenta + 2*(len(l_histDetail_sig)+1)
         histDetail_temp.color = Details.l_color_sig[len(l_histDetail_sig)]
-        histDetail_temp.lineStyle = 2
-        histDetail_temp.lineWidth = 4
+        histDetail_temp.lineStyle = Details.l_lineStyle_sig[len(l_histDetail_sig)]
+        histDetail_temp.lineWidth = 5
         l_histDetail_sig.append(histDetail_temp)
     
     
-    outDir = "plots/SR_yields/%s" %(era)
+    # Rearrange:
+    # Reverse the order of prompt backgrounds (ttbar last)
+    # Fake at last
+    l_histDetail = l_histDetail[0:-1][::-1] + [l_histDetail[-1]]
+    
+    
+    noPrelimStr = "_noPrelim"*(args.noPrelim)
+    outDir = "plots/SR_yields/%s%s" %("+".join(l_era), noPrelimStr)
     os.system("mkdir -p %s" %(outDir))
     
     outFileName = "%s/SRyield_%s_%s" %(outDir, cutFlowNameBase, sig_x_str_fileName)
@@ -3380,14 +4041,14 @@ if (args.SRyield) :
         drawRatioStatErr = False,
         drawRatioTotalErr = True,
         title = "SR yields (%s)" %(era),
-        xTitle = "Bin number", yTitle = "Events",
-        ratioYtitle = "Data / Prediction",
+        xTitle = "SR bin number", yTitle = "Events",
+        ratioYtitle = "Data / Pred.",
         d_colorRatioGridY = {1: {"color": 2}},
         #xMin = plotQuantity.xMin, xMax = plotQuantity.xMax,
-        yMin = 1e-3,
-        yMax = 1e6,
+        yMin = 1e-1,
+        yMax = 1e5,
         logY = True,
-        ratioHist_ymax = 3,
+        ratioHist_ymax = 2,
         gridX = False,
         gridY = False,
         centerLabelsX = True,
@@ -3400,8 +4061,8 @@ if (args.SRyield) :
         dataLegendFirst = True,
         drawRatioLegend = False,
         fixAlphanumericBinLabels = True,
-        CMSextraText = Common.getCMSextraText(),
-        lumiText = Common.getLumitext(era),
+        CMSextraText = Common.getCMSextraText(isPrelim = (not args.noPrelim)),
+        lumiText = Common.getLumitext("+".join(l_era)),
         outFileName = outFileName,
         #outFileName_suffix = "",
     )

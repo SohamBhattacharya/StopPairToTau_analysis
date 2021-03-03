@@ -16,6 +16,8 @@
 
 # include "TFile.h"
 # include "TH1F.h"
+# include "TH2F.h"
+# include "TH3F.h"
 # include "TColor.h"
 
 # include "RooWorkspace.h"

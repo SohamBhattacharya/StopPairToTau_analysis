@@ -9,6 +9,7 @@ import sys
 import tabulate
 
 import ROOT
+ROOT.gROOT.SetBatch(1)
 
 
 import Array2LatexTable

@@ -167,7 +167,7 @@ namespace FakeRate_tauTau
                 //);
                 
                 v_tau_DM.at(iTau) = Common::isTauNewDM(
-                    input->v_tau_decayMode_reco->at(iTau)
+                    (int) input->v_tau_decayMode_reco->at(iTau)
                 );
             }
             
@@ -448,9 +448,14 @@ namespace FakeRate_tauTau
             output_reco->h2_tau_pT_vs_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos1), tauTau_tau1_4mom_reco.perp(), eventWeight_common);
             output_reco->h2_tau_pT_vs_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos2), tauTau_tau2_4mom_reco.perp(), eventWeight_common);
             
+            output_reco->h2_tau_eta_vs_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos1), tauTau_tau1_4mom_reco.eta(), eventWeight_common);
+            output_reco->h2_tau_eta_vs_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos2), tauTau_tau2_4mom_reco.eta(), eventWeight_common);
+            
             output_reco->h2_tau_nPV_vs_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos1), input->vertex_n_reco, eventWeight_common);
             output_reco->h2_tau_nPV_vs_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos2), input->vertex_n_reco, eventWeight_common);
             
+            output_reco->h3_tau_pT_eta_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos1), tauTau_tau1_4mom_reco.eta(), tauTau_tau1_4mom_reco.perp(), eventWeight_common);
+            output_reco->h3_tau_pT_eta_DM->Fill(input->v_tau_decayMode_reco->at(tauTau_pos2), tauTau_tau2_4mom_reco.eta(), tauTau_tau2_4mom_reco.perp(), eventWeight_common);
             
             double jet_HT_reco = 0;
             
